@@ -3,3 +3,4 @@ data/Location
 .ipynb_checkpoints
 lightning_logs
 model/*
+.DS_Store
