@@ -1,0 +1,5 @@
+data/*
+data/Location
+.ipynb_checkpoints
+lightning_logs
+model/*
