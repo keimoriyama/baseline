@@ -15,8 +15,6 @@ from torch.utils.data import DataLoader
 
 from omegaconf import OmegaConf
 
-debug = True
-
 
 def main():
     data_path = "./data/train.csv"
@@ -24,8 +22,10 @@ def main():
     config = OmegaConf.load("./config/baseline.yml")
 
     seed_everything(config.seed)
-    exp_name = "{}_seed{}_alpha{}".format(config.name, config.seed, config.alpha)
-
+    exp_name = "{}_seed{}_alpha{}".format(config.name, config.seed, config.train.alpha)
+    epoch = config.train.epoch
+    debug = config.debug
+    
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
     train, validate = train_test_split(df)
@@ -42,9 +42,9 @@ def main():
     validate_dataloader = DataLoader(validate_dataset, batch_size=8)
 
     mlflow_logger = pl_loggers.MLFlowLogger(experiment_name=exp_name)
-    trainer = pl.Trainer(max_epochs=1, logger=mlflow_logger, accelerator="gpu")
+    trainer = pl.Trainer(max_epochs=epoch, logger=mlflow_logger, accelerator="gpu")
     Metrics = CalculateMetrics()
-    model = BaselineModel(alpha=config.alpha, metrics=Metrics)
+    model = BaselineModel(alpha=config.train.alpha, metrics=Metrics)
     trainer.fit(
         model,
         train_dataloader,

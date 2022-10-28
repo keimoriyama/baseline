@@ -8,5 +8,9 @@ class CalculateMetrics:
         acc = acc.item()
         precision = precision.item()
         recall = recall.item()
-        f1 = precision * recall * 2 / (precision + recall)
+        f1 = 0
+        if (precision + recall) == 0:
+            f1 = 0
+        else:
+            f1 = precision * recall * 2 / (precision + recall)
         return (acc, precision, recall, f1)
