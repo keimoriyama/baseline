@@ -37,14 +37,8 @@ class BaselineModel(pl.LightningModule):
         out = out[0].reshape(-1, self.config.hidden_size * self.token_len)
         out = self.model(out)
         loss = self.loss_function(out, cloud_out)
+        self.log_dict({"train_loss": loss}, on_epoch=True, on_step=True, logger=True)
         return loss
-
-    def training_epoch_end(self, outputs) -> None:
-        loss = 0
-        for out in outputs:
-            loss += out["loss"]
-        loss /= len(outputs)
-        self.log_dict({"train_loss": loss})
 
     def validation_step(self, batch, _):
         input_ids = batch["tokens"]
@@ -66,36 +60,15 @@ class BaselineModel(pl.LightningModule):
         model_ans = torch.Tensor(model_ans)
         answer = answer.to("cpu")
         acc, precision, recall, f1 = self.metrics(answer, model_ans)
-        return_data = {
+        log_data = {
             "accuracy": acc,
             "precision": precision,
             "recall": recall,
             "f1": f1,
             "validation_loss": loss,
         }
-        return return_data
-
-    def validation_epoch_end(self, outputs):
-        acc, precision, recall, f1, valid_loss = 0, 0, 0, 0, 0
-        for out in outputs:
-            acc += out["accuracy"]
-            precision += out["precision"]
-            recall += out["recall"]
-            f1 += out["f1"]
-            valid_loss += out["validation_loss"]
-        acc /= len(outputs)
-        precision /= len(outputs)
-        recall /= len(outputs)
-        f1 /= len(outputs)
-        valid_loss /= len(outputs)
-        log_data = {
-            "accuracy": acc,
-            "precision": precision,
-            "recall": recall,
-            "validation_loss": valid_loss,
-        }
-        # print(log_data)
-        self.log_dict(log_data)
+        self.log_dict(log_data, on_epoch=True, on_step=True, logger=True)
+        return log_data
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
