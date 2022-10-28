@@ -24,7 +24,7 @@ def main():
     config = OmegaConf.load("./config/baseline.yml")
 
     seed_everything(config.seed)
-    exp_name = config.name + "_seed:" + config.seed + "_alpha" + config.alpha
+    exp_name = "{}_seed{}_alpha{}".format(config.name, config.seed, config.alpha)
 
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
@@ -41,7 +41,7 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=8)
     validate_dataloader = DataLoader(validate_dataset, batch_size=8)
 
-    mlflow_logger = pl_loggers.MLFlowLogger(experiment_name = exp_name)
+    mlflow_logger = pl_loggers.MLFlowLogger(experiment_name=exp_name)
     trainer = pl.Trainer(max_epochs=1, logger=mlflow_logger, accelerator="gpu")
     Metrics = CalculateMetrics()
     model = BaselineModel(alpha=config.alpha, metrics=Metrics)
