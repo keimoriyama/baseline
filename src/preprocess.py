@@ -1,7 +1,7 @@
 import pandas as pd
 from tokenizer import JanomeBpeTokenizer
 
-data_path = "/Users/keimoriyama/Program/lab/data/system_df.csv"
+data_path = "./data/system_df.csv"
 tokenizer = JanomeBpeTokenizer("./model/codecs.txt")
 
 
@@ -27,7 +27,7 @@ def main():
             column_name = "system_dicision"
         df[column_name] = dicision_df
     df["text"] = df["text_text"].apply(tokenize_text)
-    df = df[["system_dicision", "cloud_dicision", "correct", "text", "attribute"]]
+    df = df[["system_dicision", "cloud_dicision", "correct", "text", "attribute"]].replace(True, 1).replace(False, 0)
     """ デバック用
     text = ['system_dicision', 'cloud_dicision']
     for t in text:

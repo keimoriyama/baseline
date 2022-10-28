@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import pandas as pd
 import ast
 
@@ -12,32 +13,38 @@ from pytorch_lightning import loggers as pl_loggers
 
 from torch.utils.data import DataLoader
 
+from omegaconf import OmegaConf
 
-seed_everything(1234)
 debug = True
 
 
 def main():
-    data_path = "/Users/keimoriyama/Program/lab/data/train.csv"
+    data_path = "./data/train.csv"
+
+    config = OmegaConf.load("./config/baseline.yml")
+
+    seed_everything(config.seed)
+    exp_name = config.name + "_seed:" + config.seed + "_alpha" + config.alpha
+
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
-    df = df.replace(True, 1).replace(False, 0)
     train, validate = train_test_split(df)
     if debug:
-        train = train[: 32 * 2]
-        validate = validate[: 32 * 2]
+        train = train[: 8 * 2]
+        validate = validate[: 8 * 2]
+    # データセットの用意
     train = train.reset_index()
     validate = validate.reset_index()
     train_dataset = SimulateDataset(train)
     validate_dataset = SimulateDataset(validate)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=32)
-    validate_dataloader = DataLoader(validate_dataset, batch_size=32)
+    train_dataloader = DataLoader(train_dataset, batch_size=8)
+    validate_dataloader = DataLoader(validate_dataset, batch_size=8)
 
-    mlflow_logger = pl_loggers.MLFlowLogger()
-    trainer = pl.Trainer(max_epochs=1, logger=mlflow_logger)
+    mlflow_logger = pl_loggers.MLFlowLogger(experiment_name = exp_name)
+    trainer = pl.Trainer(max_epochs=1, logger=mlflow_logger, accelerator="gpu")
     Metrics = CalculateMetrics()
-    model = BaselineModel(alpha=0.5, metrics=Metrics)
+    model = BaselineModel(alpha=config.alpha, metrics=Metrics)
     trainer.fit(
         model,
         train_dataloader,

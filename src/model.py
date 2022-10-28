@@ -64,6 +64,7 @@ class BaselineModel(pl.LightningModule):
             else:
                 model_ans.append(system_out[i])
         model_ans = torch.Tensor(model_ans)
+        answer = answer.to("cpu")
         acc, precision, recall, f1 = self.metrics(answer, model_ans)
         return_data = {
             "accuracy": acc,
@@ -93,7 +94,7 @@ class BaselineModel(pl.LightningModule):
             "recall": recall,
             "validation_loss": valid_loss,
         }
-        print(log_data)
+        # print(log_data)
         self.log_dict(log_data)
 
     def configure_optimizers(self):
