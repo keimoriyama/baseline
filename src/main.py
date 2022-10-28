@@ -44,7 +44,7 @@ def main():
     mlflow_logger = pl_loggers.MLFlowLogger(experiment_name=exp_name)
     trainer = pl.Trainer(max_epochs=epoch, logger=mlflow_logger, accelerator="gpu")
     Metrics = CalculateMetrics()
-    model = BaselineModel(alpha=config.train.alpha, metrics=Metrics)
+    model = BaselineModel(alpha=config.train.alpha, metrics=Metrics,load_bert=True)
     trainer.fit(
         model,
         train_dataloader,
