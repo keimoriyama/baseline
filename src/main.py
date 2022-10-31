@@ -1,10 +1,13 @@
 
+from unicodedata import name
 import pandas as pd
 import ast
 
 from dataset import SimulateDataset
 from model import BaselineModel
 from utils import CalculateMetrics
+
+from pytorch_lightning.loggers import WandbLogger
 
 from pytorch_lightning.utilities.seed import seed_everything
 from sklearn.model_selection import train_test_split
@@ -42,13 +45,13 @@ def main():
     validate_dataloader = DataLoader(validate_dataset, batch_size=8)
 
     mlflow_logger = pl_loggers.MLFlowLogger(experiment_name=exp_name)
-    trainer = pl.Trainer(max_epochs=epoch, logger=mlflow_logger, accelerator="gpu")
-    Metrics = CalculateMetrics()
-    model = BaselineModel(alpha=config.train.alpha, metrics=Metrics,load_bert=True)
+    wandb_logger = WandbLogger(name=exp_name, project="baseline")
+    trainer = pl.Trainer(max_epochs=epoch, logger=wandb_logger, accelerator="gpu")
+    model = BaselineModel(alpha=config.train.alpha,load_bert=True)
     trainer.fit(
         model,
         train_dataloader,
-        validate_dataloader,
+        validate_dataloader
     )
 
 

@@ -17,26 +17,17 @@ def main():
     system["system_true_count"] = (system == True).sum(axis=1)
     system["system_false_count"] = (system == False).sum(axis=1)
     # import ipdb;ipdb.set_trace()
-    threthold = [2, 4]
+    threthold = [2, 3]
     for t in threthold:
         dicision_df = system["system_true_count"] >= t
         column_name = ""
         if t == 2:
             column_name = "cloud_dicision"
-        elif t == 4:
+        elif t == 3:
             column_name = "system_dicision"
         df[column_name] = dicision_df
     df["text"] = df["text_text"].apply(tokenize_text)
     df = df[["system_dicision", "cloud_dicision", "correct", "text", "attribute"]].replace(True, 1).replace(False, 0)
-    """ デバック用
-    text = ['system_dicision', 'cloud_dicision']
-    for t in text:
-        d = df[t]
-        c = df['correct']
-        confusion_matrix = calc_confusion_matrix(c, d)
-        print(t)
-        print(calc_precision_recall(confusion_matrix))
-    """
     df.to_csv("./data/train.csv", index=False)
 
 

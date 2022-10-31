@@ -2,15 +2,14 @@ import pytorch_lightning as pl
 import torch.nn as nn
 import torch
 from transformers import RobertaConfig, RobertaModel
-
+from torchmetrics.functional import precision_recall
 
 class BaselineModel(pl.LightningModule):
-    def __init__(self, alpha, metrics, token_len=512, load_bert=False):
+    def __init__(self, alpha,token_len=512, load_bert=False):
         super().__init__()
         self.alpha = alpha
         self.softmax = torch.nn.Softmax()
         self.token_len = token_len
-        self.metrics = metrics
         self.config = RobertaConfig.from_pretrained("./model/config.json")
         if load_bert:
             self.bert = RobertaModel.from_pretrained(
@@ -59,7 +58,7 @@ class BaselineModel(pl.LightningModule):
                 model_ans.append(system_out[i])
         model_ans = torch.Tensor(model_ans)
         answer = answer.to("cpu")
-        acc, precision, recall, f1 = self.metrics(answer, model_ans)
+        acc, precision, recall, f1 = self.calc_metrics(answer, model_ans)
         log_data = {
             "accuracy": acc,
             "precision": precision,
@@ -83,3 +82,16 @@ class BaselineModel(pl.LightningModule):
         )
         loss = loss.sum() / len(loss)
         return loss
+    
+    def calc_metrics(self,  answer, result):
+        acc = sum(answer == result) / len(answer)
+        precision, recall = precision_recall(result, answer)
+        acc = acc.item()
+        precision = precision.item()
+        recall = recall.item()
+        f1 = 0
+        if (precision + recall) == 0:
+            f1 = 0
+        else:
+            f1 = precision * recall * 2 / (precision + recall)
+        return (acc, precision, recall, f1)
