@@ -9,7 +9,7 @@
 #$ -m b
 #$ -m e
 #$ -m a
-#$ -ac d=nvcr-pytorch-2205,d_shm=60G
+#$ -ac d=nvcr-pytorch-2205,d_shm=50G
 ###$ -l docker,docker_images="docker_images=dl-omsio:5000/nvcr.io/nvidia/pytorch:22.05-py3",h_rt=86400,gpu=1
 
 
