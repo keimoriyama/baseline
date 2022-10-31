@@ -1,4 +1,4 @@
-from distutils.command.config import config
+
 import pandas as pd
 import ast
 
@@ -22,7 +22,7 @@ def main():
     config = OmegaConf.load("./config/baseline.yml")
 
     seed_everything(config.seed)
-    exp_name = "{}_seed{}_alpha{}".format(config.name, config.seed, config.train.alpha)
+    exp_name = config.name
     epoch = config.train.epoch
     debug = config.debug
     
