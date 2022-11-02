@@ -5,7 +5,6 @@ import ast
 
 from dataset import SimulateDataset
 from model import BaselineModel
-from utils import CalculateMetrics
 
 from pytorch_lightning.loggers import WandbLogger
 
@@ -28,6 +27,9 @@ def main():
     exp_name = config.name
     epoch = config.train.epoch
     debug = config.debug
+    batch_size= config.train.batch_size
+    learning_rate = config.train.learning_rate
+    hidden_dim = config.train.hidden_dim
     
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
@@ -41,13 +43,16 @@ def main():
     train_dataset = SimulateDataset(train)
     validate_dataset = SimulateDataset(validate)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=8)
-    validate_dataloader = DataLoader(validate_dataset, batch_size=8)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
+    validate_dataloader = DataLoader(validate_dataset, batch_size=batch_size)
 
-    mlflow_logger = pl_loggers.MLFlowLogger(experiment_name=exp_name)
     wandb_logger = WandbLogger(name=exp_name, project="baseline")
+    wandb_logger.log_hyperparams(config.train)
     trainer = pl.Trainer(max_epochs=epoch, logger=wandb_logger, accelerator="gpu")
-    model = BaselineModel(alpha=config.train.alpha,load_bert=True)
+    model = BaselineModel(alpha=config.train.alpha,load_bert=True, out_dim = config.train.out_dim,
+    learning_rate = config.train.learning_rate,
+    hidden_dim = config.train.hidden_dim
+    )
     trainer.fit(
         model,
         train_dataloader,
