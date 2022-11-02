@@ -49,7 +49,8 @@ def main():
     wandb_logger = WandbLogger(name=exp_name, project="baseline")
     wandb_logger.log_hyperparams(config.train)
     trainer = pl.Trainer(max_epochs=epoch, logger=wandb_logger, accelerator="gpu")
-    model = BaselineModel(alpha=config.train.alpha,load_bert=True, out_dim = config.train.out_dim,
+    model = BaselineModel(alpha=config.train.alpha,
+    load_bert=True, out_dim = config.train.out_dim,
     learning_rate = config.train.learning_rate,
     hidden_dim = config.train.hidden_dim
     )

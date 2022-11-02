@@ -4,3 +4,7 @@ debug: False
 train:
   alpha: 0.5
   epoch: 10
+  batch_size: 8
+  out_dim: 2
+  learning_rate: 1e-5
+  hidden_dim: 512
