@@ -18,6 +18,7 @@ class SimulateDataset(Dataset):
         system_dicision = d["system_dicision"]
         cloud_dicision = d["cloud_dicision"]
         correct = d["correct"]
+        system_out = d['system_out']
         text = ["<s>"] + text + ["</s>"]
         attention_mask = [0] * len(text)
 
@@ -29,6 +30,7 @@ class SimulateDataset(Dataset):
             "system_dicision": system_dicision,
             "cloud_dicision": cloud_dicision,
             "correct": correct,
+            "system_out": system_out,
             "tokens": torch.LongTensor(token_id),
             "attention_mask": torch.LongTensor(attention_mask),
         }

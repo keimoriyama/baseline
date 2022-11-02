@@ -3,7 +3,7 @@ name: baseline
 debug: False
 train:
   alpha: 0.5
-  epoch: 10
+  epoch: 50
   batch_size: 8
   out_dim: 2
   learning_rate: 1e-5

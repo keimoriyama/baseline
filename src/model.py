@@ -49,7 +49,8 @@ class BaselineModel(pl.LightningModule):
         input_ids = batch["tokens"]
         attention_mask = batch["attention_mask"]
         cloud_out = batch['cloud_dicision']
-        system_out = batch["system_dicision"]
+        system_dicision = batch['system_dicision']
+        system_out = batch["system_out"]
         annotator  = batch["correct"]
         out = self.forward(input_ids, attention_mask)
         # モデルの出力に合わせるように学習しているような気がする
@@ -57,42 +58,43 @@ class BaselineModel(pl.LightningModule):
         # system_out：システムの正誤判定
         # cloud_out：クラウドの正誤判定
         # システムとクラウドのあっている方の正誤判定を採用するようにしたい
-        # import ipdb;ipdb.set_trace()
-        # モデルの出力を得る
-        # 損失を計算する
-        correct = (annotator == system_out).to(int)
-        wrong = 1 - correct
-        loss = self.loss_function(out, wrong, correct)
+        loss = self.loss_function(out, system_out, system_dicision, cloud_out, annotator)
         self.log_dict({"train_loss": loss}, on_epoch=True, on_step=True, logger=True)
         return loss
 
     def validation_step(self, batch, _):
         input_ids = batch["tokens"]
         attention_mask = batch["attention_mask"]
-        system_out = batch["system_dicision"]
-        cloud_out = batch['cloud_dicision']
+        system_dicision = batch["system_dicision"]
+        system_out = batch['system_out']
+        cloud_dicision = batch['cloud_dicision']
         annotator  = batch["correct"]
         out = self.forward(input_ids, attention_mask=attention_mask)
-        
-        loss = self.loss_function(out, annotator, system_out).item()
-        # print(out)
-        model_out = out.argmax(1)
-        print(model_out)
+
+        loss = self.loss_function(out, system_out, system_dicision, cloud_dicision, annotator).item()
         model_ans = []
-        for i, out in enumerate(model_out):
-            if out == 0:
-                model_ans.append(cloud_out[i])
+        system_count, cloud_count = 0, 0
+        for i, (s_out, c_out) in enumerate(zip(system_out, out[:, 1])):
+            s_out = s_out.item()
+            c_out = c_out.item()
+            if s_out > c_out:
+                model_ans.append(system_dicision[i])
+                system_count += 1
             else:
-                model_ans.append(system_out[i])
+                model_ans.append(cloud_dicision[i])
+                cloud_count += 1
         model_ans = torch.Tensor(model_ans)
         answer = annotator.to("cpu")
         acc, precision, recall, f1 = self.calc_metrics(answer, model_ans)
+        
         log_data = {
             "accuracy": acc,
             "precision": precision,
             "recall": recall,
             "f1": f1,
-            "validation_loss": loss
+            "validation_loss": loss,
+            "model_cloud_count": cloud_count,
+            "model_system_count": system_count
         }
         self.log_dict(log_data, on_epoch=True, logger=True)
         return log_data
@@ -101,13 +103,12 @@ class BaselineModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.params, lr=self.lr)
         return optimizer
 
-    def loss_function(self, output, m1, m2):
+    def loss_function(self, output, system_out, system_dicision, cloud_dicision, annotator):
         # log2(0)が入るのを防ぐために、微小値を足しておく 
+        output = torch.stack((system_out, output[:, 1]), -1)
         out = self.softmax(output) + 1e-10
-        batch_size = out.size(0)
-        # for i in range(batch_size):
-        loss =  - m2 * torch.log2(out[:, 0]) - m1 * torch.log2(out[:, 1])
-        # loss =  - (1 - correct) * torch.log2(out[:, 0]) - correct * torch.log2(out[:, 1])
+        m1 = (cloud_dicision == annotator).to(int)
+        loss =  - (self.alpha * m1 + (1-m1))* torch.log2(out[:, 0]) - m1 * torch.log2(out[:, 1])
         assert not torch.isnan(loss).any()
         loss = torch.mean(loss)
         return loss
