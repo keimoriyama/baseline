@@ -1,10 +1,13 @@
 seed: 1234
 name: baseline
-debug: False
+debug: false
+dataset:
+  num_workers: 8
 train:
   alpha: 0.5
-  epoch: 50
-  batch_size: 8
+  epoch: 300
+  batch_size: 4
   out_dim: 2
   learning_rate: 1e-5
   hidden_dim: 512
+  dropout_rate: 0.3

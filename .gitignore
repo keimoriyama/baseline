@@ -9,3 +9,4 @@ model/*
 wandb
 mlruns
 logs
+core

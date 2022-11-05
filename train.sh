@@ -2,7 +2,7 @@
 
 #$ -S /bin/sh
 #$ -P g-liat
-#$ -jc gpu-container_g1
+#$ -jc gpu-container_g4
 #$ -cwd
 #$ -e logs/logs.txt
 #$ -o logs/stdout.txt

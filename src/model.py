@@ -8,7 +8,7 @@ from torchmetrics import F1Score
 torch.autograd.set_detect_anomaly(True)
 
 class BaselineModel(pl.LightningModule):
-    def __init__(self, alpha,token_len=512, tmp_out_dim = 384, out_dim = 2,load_bert=False, learning_rate= 1e-5, hidden_dim= 512):
+    def __init__(self, alpha,token_len=512, tmp_out_dim = 384, out_dim = 2,load_bert=False, learning_rate= 1e-5, hidden_dim= 512, dropout_rate = 0.3):
         super().__init__()
         self.alpha = alpha
         self.softmax = torch.nn.Softmax(dim=1)
@@ -23,13 +23,21 @@ class BaselineModel(pl.LightningModule):
         self.tmp_out_dim = tmp_out_dim
         self.out_dim = out_dim
         self.hidden_dim = hidden_dim
+        self.dropout_rate = dropout_rate
+        self.dropout = nn.Dropout(p=self.dropout_rate)
+        self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
+        self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
         # self.linear = nn.Linear(self.config.hidden_size, self.tmp_out_dim)
         self.model = nn.Sequential(
             nn.Linear(self.token_len * self.config.hidden_size, self.hidden_dim*2),
             # nn.Linear(self.tmp_out_dim * self.token_len, 1024),
+            self.batch_norm1,
             nn.ReLU(),
+            nn.Dropout(p=self.dropout_rate),
             nn.Linear(self.hidden_dim*2, self.hidden_dim),
+            self.batch_norm2,
             nn.ReLU(),
+            nn.Dropout(p=self.dropout_rate),
             nn.Linear(self.hidden_dim, self.out_dim)
         )
         self.params = list(self.model.parameters()) + list(self.bert.parameters())
@@ -73,16 +81,16 @@ class BaselineModel(pl.LightningModule):
 
         loss = self.loss_function(out, system_out, system_dicision, cloud_dicision, annotator).item()
         model_ans = []
-        system_count, cloud_count = 0, 0
+        s_count, c_count = 0, 0
         for i, (s_out, c_out) in enumerate(zip(system_out, out[:, 1])):
             s_out = s_out.item()
             c_out = c_out.item()
             if s_out > c_out:
                 model_ans.append(system_dicision[i])
-                system_count += 1
+                s_count += 1
             else:
                 model_ans.append(cloud_dicision[i])
-                cloud_count += 1
+                c_count += 1
         model_ans = torch.Tensor(model_ans)
         answer = annotator.to("cpu")
         acc, precision, recall, f1 = self.calc_metrics(answer, model_ans)
@@ -93,11 +101,19 @@ class BaselineModel(pl.LightningModule):
             "recall": recall,
             "f1": f1,
             "validation_loss": loss,
-            "model_cloud_count": cloud_count,
-            "model_system_count": system_count
+            "system_count": s_count,
+            "crowd_count": c_count
         }
         self.log_dict(log_data, on_epoch=True, logger=True)
         return log_data
+    
+    def validation_epoch_end(self,validation_epoch_outputs):
+        system_all_count, crowd_all_count = 0, 0
+        for out in validation_epoch_outputs:
+            system_all_count += out['system_count']
+            crowd_all_count += out['crowd_count']
+        data = {"system_count": system_all_count, "crowd_count":crowd_all_count}
+        self.log_dict(data)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.params, lr=self.lr)
