@@ -56,7 +56,7 @@ class BaselineModel(pl.LightningModule):
     def training_step(self, batch, _):
         input_ids = batch["tokens"]
         attention_mask = batch["attention_mask"]
-        cloud_out = batch['cloud_dicision']
+        cloud_dicision = batch['cloud_dicision']
         system_dicision = batch['system_dicision']
         system_out = batch["system_out"]
         annotator  = batch["correct"]
@@ -66,8 +66,28 @@ class BaselineModel(pl.LightningModule):
         # system_out：システムの正誤判定
         # cloud_out：クラウドの正誤判定
         # システムとクラウドのあっている方の正誤判定を採用するようにしたい
-        loss = self.loss_function(out, system_out, system_dicision, cloud_out, annotator)
+        loss = self.loss_function(out, system_out, system_dicision, cloud_dicision, annotator)
         self.log_dict({"train_loss": loss}, on_epoch=True, on_step=True, logger=True)
+        model_ans = []
+        s_count, c_count = 0, 0
+        for i, (s_out, c_out) in enumerate(zip(system_out, out[:, 1])):
+            s_out = s_out.item()
+            c_out = c_out.item()
+            if s_out > c_out:
+                model_ans.append(system_dicision[i])
+                s_count += 1
+            else:
+                model_ans.append(cloud_dicision[i])
+                c_count += 1
+        model_ans = torch.Tensor(model_ans)
+        acc, precision, recall,f1= self.calc_all_metrics(model_ans, annotator)
+        log_data ={
+            "train_accuracy": acc,
+            "train_precision": precision,
+            "train_recall": recall,
+            "train_f1": f1
+        }
+        self.log_dict(log_data, on_epoch=True, logger=True)
         return loss
 
     def validation_step(self, batch, _):
@@ -92,14 +112,12 @@ class BaselineModel(pl.LightningModule):
                 model_ans.append(cloud_dicision[i])
                 c_count += 1
         model_ans = torch.Tensor(model_ans)
-        answer = annotator.to("cpu")
-        acc, precision, recall, f1 = self.calc_metrics(answer, model_ans)
-        
-        log_data = {
-            "accuracy": acc,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
+        acc, precision, recall,f1= self.calc_all_metrics(model_ans, annotator)
+        log_data ={
+            "valid_accuracy": acc,
+            "valid_precision": precision,
+            "valid_recall": recall,
+            "valid_f1": f1,
             "validation_loss": loss,
             "system_count": s_count,
             "crowd_count": c_count
@@ -114,6 +132,11 @@ class BaselineModel(pl.LightningModule):
             crowd_all_count += out['crowd_count']
         data = {"system_count": system_all_count, "crowd_count":crowd_all_count}
         self.log_dict(data)
+    
+    def calc_all_metrics(self, model_ans, annotator):
+        answer = annotator.to("cpu")
+        acc, precision, recall, f1 = self.calc_metrics(answer, model_ans)
+        return acc, precision,recall, f1
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.params, lr=self.lr)
