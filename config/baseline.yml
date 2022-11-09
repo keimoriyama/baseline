@@ -1,10 +1,11 @@
 seed: 1234
 name: baseline
 debug: false
+model: random
 dataset:
   num_workers: 8
 train:
-  alpha: 0.5
+  alpha: 0.8
   epoch: 300
   batch_size: 4
   out_dim: 2
