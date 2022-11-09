@@ -11,3 +11,4 @@ mlruns
 logs
 core
 train.csv
+src/__pycache__/dataset.cpython-310.pyc
