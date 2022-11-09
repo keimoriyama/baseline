@@ -24,7 +24,8 @@ def baseline_train(data_path, config):
     batch_size = config.train.batch_size
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
-    train, validate = train_test_split(df)
+    train, validate = train_test_split(df, test_size=0.2)
+    validate, test = train_test_split(df, test_size=0.5)
     if debug:
         train = train[: 8 * 2]
         validate = validate[: 8 * 2]
@@ -33,12 +34,17 @@ def baseline_train(data_path, config):
     validate = validate.reset_index()
     train_dataset = SimulateDataset(train)
     validate_dataset = SimulateDataset(validate)
+    test_dataset = SimulateDataset(test)
 
     train_dataloader = DataLoader(
         train_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
     )
     validate_dataloader = DataLoader(
         validate_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
+    )
+    test_dataloader = DataLoader(
+        test_dataset, batch_size=batch_size,
+        num_workers=config.dataset.num_workers
     )
 
     # loggerの用意
@@ -47,7 +53,7 @@ def baseline_train(data_path, config):
     # 学習部分
     checkpoint_callback = ModelCheckpoint(
     save_top_k=10,
-    monitor="val_loss",
+    monitor="validation_loss",
     mode="min",
     dirpath="./model/baseline/",
     filename="model_alpha_{}_seed_{}".format(config.train.alpha, config.seed),
@@ -58,7 +64,7 @@ def baseline_train(data_path, config):
     )
     if config.model == "random":
         model = RandomModel(out_dim=config.train.out_dim)
-        trainer.test(model, validate_dataloader)
+        trainer.test(model, test_dataloader)
     elif config.model =="flatten":
         model = FlattenModel(
             token_len=512,
@@ -70,4 +76,4 @@ def baseline_train(data_path, config):
 
         model = BaselineModel(alpha=config.train.alpha, model=model)
         trainer.fit(model, train_dataloader, validate_dataloader)
-        trainer.test(model, validate_dataloader)
+        trainer.test(model, test_dataloader)
