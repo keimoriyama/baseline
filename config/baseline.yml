@@ -1,5 +1,6 @@
 seed: 1234
 name: baseline
+task: classification
 debug: false
 dataset:
   num_workers: 8
