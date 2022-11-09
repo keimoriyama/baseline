@@ -88,9 +88,9 @@ class SimulateDataset(Dataset):
         }
 
     def preprocess(self, data):
-        indexes = data.index
+        indexes = len(data)
         data_list = []
-        for i in indexes:
+        for i in range(indexes):
             d = data.iloc[i].to_dict()
             data_list.append(d)
         return data_list
