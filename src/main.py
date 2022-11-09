@@ -2,7 +2,8 @@ import pandas as pd
 import ast
 
 from dataset import SimulateDataset
-from model import BaselineModel
+from train import BaselineModel
+from models import FlattenModel, RandomModel
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -51,18 +52,28 @@ def main():
     wandb_logger = WandbLogger(name=exp_name, project="baseline")
     wandb_logger.log_hyperparams(config.train)
     # 学習部分
-    trainer = pl.Trainer(
-        max_epochs=epoch, logger=wandb_logger, strategy="ddp", gpus=gpu_num
-    )
-    model = BaselineModel(
-        alpha=config.train.alpha,
-        load_bert=True,
-        out_dim=config.train.out_dim,
-        learning_rate=config.train.learning_rate,
-        hidden_dim=config.train.hidden_dim,
-        dropout_rate=config.train.dropout_rate,
-    )
-    trainer.fit(model, train_dataloader, validate_dataloader)
+    trainer = pl.Trainer(max_epochs=epoch, logger=wandb_logger, strategy="ddp",  gpus = gpu_num)
+    if config.model == "random":
+        model = RandomModel(out_dim=config.train.out_dim)
+        model = BaselineModel(alpha=config.train.alpha,model = model
+        )
+        trainer.test(model, validate_dataloader)
+    else:
+        model = FlattenModel(
+            token_len=512,
+            out_dim = config.train.out_dim,
+            hidden_dim = config.train.hidden_dim,
+            dropout_rate=config.train.dropout_rate,
+            load_bert = True)
+
+        model = BaselineModel(alpha=config.train.alpha,model = model
+        )
+        trainer.fit(
+            model,
+            train_dataloader,
+            validate_dataloader
+        )
+        trainer.test(model, validate_dataloader)
 
 
 if __name__ == "__main__":
