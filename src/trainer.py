@@ -7,6 +7,109 @@ from torchmetrics import F1Score
 
 torch.autograd.set_detect_anomaly(True)
 
+class ClassificationTrainer(pl.LightningModule):
+    def __init__(self, alpha,model,learning_rate= 1e-5):
+        super().__init__()
+        self.alpha = alpha
+        self.model = model
+        self.softmax = torch.nn.Softmax(dim=1)
+        self.params = self.model.parameters()
+        self.f1 = F1Score()
+        self.lr = learning_rate
+        self.loss = nn.CrossEntropyLoss()
+    
+    def forward(self, input_ids, attention_mask):
+        return self.model(input_ids, attention_mask)
+
+    def training_step(self, batch, _):
+        input_ids = batch['tokens']
+        attention_mask = batch['attention_mask']
+        attribute_id = batch['attribute_id']
+        # import ipdb;ipdb.set_trace()
+        out = self.forward(input_ids, attention_mask)
+        loss = self.loss(out, attribute_id)
+        answer = torch.argmax(out, dim=1)
+        acc, precision, recall,f1 = self.calc_metrics(answer, attribute_id)
+        log_data ={
+            "train_loss": loss,
+            "train_accuracy": acc,
+            "train_precision": precision,
+            "train_recall": recall,
+            "train_f1": f1
+        }
+        self.log_dict(log_data, on_epoch=True, logger=True)
+        return loss
+
+    def calc_metrics(self,  answer, result):
+        # import ipdb;ipdb.set_trace()
+        acc = sum(answer == result) / len(answer)
+        precision, recall = precision_recall(result, answer)
+        acc = acc.item()
+        precision = precision.item()
+        recall = recall.item()
+        f1 = self.f1(result, answer)
+        return (acc, precision, recall, f1)
+
+
+
+    def validation_step(self, batch, _):
+        input_ids = batch['tokens']
+        attention_mask = batch['attention_mask']
+        attribute_id = batch['attribute_id']
+        out = self.forward(input_ids, attention_mask)
+        loss = self.loss(out, attribute_id)
+        answer = torch.argmax(out, dim=1)
+        acc, precision, recall,f1 = self.calc_metrics(answer, attribute_id)
+        log_data ={
+            "valid_loss": loss,
+            "valid_accuracy": acc,
+            "valid_precision": precision,
+            "valid_recall": recall,
+            "valid_f1": f1
+        }
+        self.log_dict(log_data, on_epoch=True, logger=True)
+        return 
+
+    def test_step(self, batch, _):
+        input_ids = batch['tokens']
+        attention_mask = batch['attention_mask']
+        attribute_id = batch['attribute_id']
+        out = self.forward(input_ids, attention_mask)
+        loss = self.loss(out, attribute_id)
+        answer = torch.argmax(out, dim=1)
+        acc, precision, recall,f1 = self.calc_metrics(answer, attribute_id)
+        log_data ={
+            "test_loss": loss,
+            "test_accuracy": acc,
+            "test_precision": precision,
+            "test_recall": recall,
+            "test_f1": f1
+        }
+        self.log_dict(log_data, on_epoch=True, logger=True)
+        return loss
+
+    def test_epoch_end(self,output_results):
+        size = len(output_results)
+        acc, precision, recall, f1= 0,0,0,0
+        for out in output_results:
+            acc += out['test_accuracy']
+            precision += out['test_precision']
+            recall += out['test_recall']
+            f1 += out['test_f1']
+        acc /= size
+        precision /= size
+        recall /= size
+        f1 /= size
+        self.logger.log_metrics({"test_accuracy": acc})
+        self.logger.log_metrics({"test_precision": precision})
+        self.logger.log_metrics({"test_recall": recall})
+        self.logger.log_metrics({"test_f1": f1})
+
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.model.get_params(), lr=self.lr)
+        return optimizer
+
 class BaselineModel(pl.LightningModule):
     def __init__(self, alpha,model,learning_rate= 1e-5):
         super().__init__()

@@ -1,9 +1,13 @@
 from models import FlattenModel, RandomModel
 
+from pytorch_lightning.callbacks import ModelCheckpoint
+
 import pandas as pd
 import ast
 
 from dataset import SimulateDataset
+
+from trainer import BaselineModel
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -41,13 +45,21 @@ def baseline_train(data_path, config):
     wandb_logger = WandbLogger(name=exp_name, project="baseline")
     wandb_logger.log_hyperparams(config.train)
     # 学習部分
+    checkpoint_callback = ModelCheckpoint(
+    save_top_k=10,
+    monitor="val_loss",
+    mode="min",
+    dirpath="./model/baseline/",
+    filename="model_alpha_{}_seed_{}".format(config.train.alpha, config.seed),
+)
+
     trainer = pl.Trainer(
-        max_epochs=epoch, logger=wandb_logger, strategy="ddp", gpus=gpu_num
+        max_epochs=epoch, logger=wandb_logger, strategy="ddp", gpus=gpu_num,callbacks=[checkpoint_callback]
     )
     if config.model == "random":
         model = RandomModel(out_dim=config.train.out_dim)
         trainer.test(model, validate_dataloader)
-    else:
+    elif config.model =="flatten":
         model = FlattenModel(
             token_len=512,
             out_dim=config.train.out_dim,
@@ -56,6 +68,6 @@ def baseline_train(data_path, config):
             load_bert=True,
         )
 
-        model = FlattenModel(alpha=config.train.alpha, model=model)
+        model = BaselineModel(alpha=config.train.alpha, model=model)
         trainer.fit(model, train_dataloader, validate_dataloader)
         trainer.test(model, validate_dataloader)
