@@ -9,6 +9,7 @@ from trainer import ClassificationTrainer
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 import torch
 from torch.utils.data import DataLoader
@@ -24,8 +25,9 @@ def classification_train(data_path, config):
     out_size = max(df['attribute_id'])+1
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
-    train, validate = train_test_split(df, test_size=0.8, stratify = df['attribute_id'])
+    train, validate = train_test_split(df, test_size=0.2, stratify = df['attribute_id'])
     validate, test = train_test_split(validate, test_size=0.5, stratify = validate['attribute_id'])
+    print(len(train), len(validate), len(test))
 
     train_dataset = ClassificationDataset(train)
     validate_dataset = ClassificationDataset(validate)
@@ -43,15 +45,23 @@ def classification_train(data_path, config):
     # loggerの用意
     wandb_logger = WandbLogger(name=exp_name, project="classification")
     wandb_logger.log_hyperparams(config.train)
+
+    checkpoint_callback = ModelCheckpoint(
+    save_top_k=10,
+    monitor="validation_loss",
+    mode="min",
+    dirpath="./model/baseline/",
+    filename="model_{}_seed_{}".format(config.model, config.seed))
+
     trainer = pl.Trainer(
         max_epochs=epoch, logger=wandb_logger
-        , strategy="ddp", gpus=gpu_num)
+        , strategy="ddp", gpus=1, callbacks=[checkpoint_callback])
     model = FlattenModel(
             token_len=512,
             out_dim=out_size,
             hidden_dim=config.train.hidden_dim,
             dropout_rate=config.train.dropout_rate,
-            load_bert=True)
+            load_bert=False)
     classification_train = ClassificationTrainer(alpha=config.train.alpha, model=model)
     trainer.fit(classification_train, train_dataloader, validate_dataloader)
     trainer.test(classification_train, test_dataloader)
