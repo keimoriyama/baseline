@@ -3,6 +3,26 @@ from torch.utils.data import Dataset
 import json
 
 
+class ClassificationDataset(Dataset):
+    def __init__(self, data, num_tokens=512) -> None:
+        super().__init__()
+        self.data = self.preprocess(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        return super().__getitem__(index)
+
+    def preprocess(self, data):
+        indexes = data.index
+        data_list = []
+        for i in indexes:
+            d = data.iloc[i].to_dict()
+            data_list.append(d)
+        return data_list
+
+
 class SimulateDataset(Dataset):
     def __init__(self, data, num_tokens=512):
         self.data = self.preprocess(data)
@@ -18,7 +38,7 @@ class SimulateDataset(Dataset):
         system_dicision = d["system_dicision"]
         cloud_dicision = d["cloud_dicision"]
         correct = d["correct"]
-        system_out = d['system_out']
+        system_out = d["system_out"]
         text = ["<s>"] + text + ["</s>"]
         attention_mask = [0] * len(text)
 
