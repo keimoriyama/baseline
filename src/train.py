@@ -8,55 +8,22 @@ from torchmetrics import F1Score
 torch.autograd.set_detect_anomaly(True)
 
 class BaselineModel(pl.LightningModule):
-    def __init__(self, alpha,token_len=512, tmp_out_dim = 384, out_dim = 2,load_bert=False, learning_rate= 1e-5, hidden_dim= 512, dropout_rate = 0.3):
+    def __init__(self, alpha,model,learning_rate= 1e-5):
         super().__init__()
         self.alpha = alpha
+        self.model = model
         self.softmax = torch.nn.Softmax(dim=1)
-        self.token_len = token_len
-        self.config = RobertaConfig.from_pretrained("./model/config.json")
-        if load_bert:
-            self.bert = RobertaModel.from_pretrained(
-                "./model/pytorch_model.bin", config=self.config
-            )
-        else:
-            self.bert = RobertaModel(config=self.config)
-        self.tmp_out_dim = tmp_out_dim
-        self.out_dim = out_dim
-        self.hidden_dim = hidden_dim
-        self.dropout_rate = dropout_rate
-        self.dropout = nn.Dropout(p=self.dropout_rate)
-        self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
-        self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
-        # self.linear = nn.Linear(self.config.hidden_size, self.tmp_out_dim)
-        self.model = nn.Sequential(
-            nn.Linear(self.token_len * self.config.hidden_size, self.hidden_dim*2),
-            # nn.Linear(self.tmp_out_dim * self.token_len, 1024),
-            self.batch_norm1,
-            nn.ReLU(),
-            nn.Dropout(p=self.dropout_rate),
-            nn.Linear(self.hidden_dim*2, self.hidden_dim),
-            self.batch_norm2,
-            nn.ReLU(),
-            nn.Dropout(p=self.dropout_rate),
-            nn.Linear(self.hidden_dim, self.out_dim)
-        )
-        self.params = list(self.model.parameters()) + list(self.bert.parameters())
+        self.params = self.model.parameters()
         self.f1 = F1Score()
         self.lr = learning_rate
     
     def forward(self, input_ids, attention_mask):
-        out = self.bert(input_ids, attention_mask=attention_mask)
-        out = out['last_hidden_state']
-        # out = self.linear(out)
-        out = out.reshape(-1, self.token_len * self.config.hidden_size)
-        # out = out.reshape(-1, self.token_len * self.tmp_out_dim)
-        out = self.model(out)
-        return out
+        return self.model(input_ids, attention_mask)
 
     def training_step(self, batch, _):
         input_ids = batch["tokens"]
         attention_mask = batch["attention_mask"]
-        cloud_dicision = batch['cloud_dicision']
+        crowd_dicision = batch['cloud_dicision']
         system_dicision = batch['system_dicision']
         system_out = batch["system_out"]
         annotator  = batch["correct"]
@@ -66,20 +33,9 @@ class BaselineModel(pl.LightningModule):
         # system_out：システムの正誤判定
         # cloud_out：クラウドの正誤判定
         # システムとクラウドのあっている方の正誤判定を採用するようにしたい
-        loss = self.loss_function(out, system_out, system_dicision, cloud_dicision, annotator)
+        loss = self.loss_function(out, system_out, system_dicision, crowd_dicision, annotator)
         self.log_dict({"train_loss": loss}, on_epoch=True, on_step=True, logger=True)
-        model_ans = []
-        s_count, c_count = 0, 0
-        for i, (s_out, c_out) in enumerate(zip(system_out, out[:, 1])):
-            s_out = s_out.item()
-            c_out = c_out.item()
-            if s_out > c_out:
-                model_ans.append(system_dicision[i])
-                s_count += 1
-            else:
-                model_ans.append(cloud_dicision[i])
-                c_count += 1
-        model_ans = torch.Tensor(model_ans)
+        model_ans, _, _ = self.model.predict(out, system_out, system_dicision, crowd_dicision)
         acc, precision, recall,f1= self.calc_all_metrics(model_ans, annotator)
         log_data ={
             "train_accuracy": acc,
@@ -95,23 +51,13 @@ class BaselineModel(pl.LightningModule):
         attention_mask = batch["attention_mask"]
         system_dicision = batch["system_dicision"]
         system_out = batch['system_out']
-        cloud_dicision = batch['cloud_dicision']
+        crowd_dicision = batch['cloud_dicision']
         annotator  = batch["correct"]
         out = self.forward(input_ids, attention_mask=attention_mask)
 
-        loss = self.loss_function(out, system_out, system_dicision, cloud_dicision, annotator).item()
-        model_ans = []
-        s_count, c_count = 0, 0
-        for i, (s_out, c_out) in enumerate(zip(system_out, out[:, 1])):
-            s_out = s_out.item()
-            c_out = c_out.item()
-            if s_out > c_out:
-                model_ans.append(system_dicision[i])
-                s_count += 1
-            else:
-                model_ans.append(cloud_dicision[i])
-                c_count += 1
-        model_ans = torch.Tensor(model_ans)
+        loss = self.loss_function(out, system_out, system_dicision, crowd_dicision, annotator).item()
+    
+        model_ans, s_count, c_count = self.model.predict(out, system_out, system_dicision, crowd_dicision)
         acc, precision, recall,f1= self.calc_all_metrics(model_ans, annotator)
         log_data ={
             "valid_accuracy": acc,
@@ -133,13 +79,57 @@ class BaselineModel(pl.LightningModule):
         data = {"system_count": system_all_count, "crowd_count":crowd_all_count}
         self.log_dict(data)
     
+    def test_step(self, batch, _):
+        input_ids = batch["tokens"]
+        attention_mask = batch["attention_mask"]
+        system_dicision = batch["system_dicision"]
+        system_out = batch['system_out']
+        crowd_dicision = batch['cloud_dicision']
+        annotator  = batch["correct"]
+        out = self.forward(input_ids, attention_mask=attention_mask)
+        if out is not None:
+            model_ans, s_count, c_count = self.model.predict(out, system_out, system_dicision, crowd_dicision)
+        else:
+            model_ans, s_count, c_count = self.model.predict(system_dicision, crowd_dicision)
+        acc, precision, recall,f1= self.calc_all_metrics(model_ans, annotator)
+        log_data ={
+            "test_accuracy": acc,
+            "test_precision": precision,
+            "test_recall": recall,
+            "test_f1": f1.item(),
+            "system_count": s_count,
+            "crowd_count": c_count
+        }
+        return log_data
+    
+    def test_epoch_end(self,output_results):
+        size = len(output_results)
+        acc, precision, recall, f1, s_count, c_count = 0,0,0,0,0,0
+        for out in output_results:
+            acc += out['test_accuracy']
+            precision += out['test_precision']
+            recall += out['test_recall']
+            f1 += out['test_f1']
+            s_count += out['system_count']
+            c_count += out['crowd_count']
+        acc /= size
+        precision /= size
+        recall /= size
+        f1 /= size
+        self.logger.log_metrics({"test_accuracy": acc})
+        self.logger.log_metrics({"test_precision": precision})
+        self.logger.log_metrics({"test_recall": recall})
+        self.logger.log_metrics({"test_f1": f1})
+        self.logger.log_metrics({"system_count": s_count})
+        self.logger.log_metrics({"crowd_count": c_count})
+    
     def calc_all_metrics(self, model_ans, annotator):
         answer = annotator.to("cpu")
         acc, precision, recall, f1 = self.calc_metrics(answer, model_ans)
         return acc, precision,recall, f1
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.params, lr=self.lr)
+        optimizer = torch.optim.Adam(self.model.get_params(), lr=self.lr)
         return optimizer
 
     def loss_function(self, output, system_out, system_dicision, cloud_dicision, annotator):
