@@ -56,8 +56,9 @@ def main():
         attribute_df = attribute_df.rename(
             columns={"index": "attribute", "attribute": "filter"}
         )
+        attribute_df["attribute_id"] = [i for i in range(len(attribute_df))]
         df = pd.merge(df, attribute_df, on="attribute")
-        df = df[df["filter"]][["text_text", "attribute"]]
+        df = df[df["filter"]][["text_text", "attribute", "attribute_id"]]
         df.to_csv("./data/classification.csv", index=False)
 
 
