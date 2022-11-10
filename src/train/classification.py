@@ -86,7 +86,7 @@ def classification_train(data_path, config):
             out_dim=out_size,
             hidden_dim=config.train.hidden_dim,
             dropout_rate=config.train.dropout_rate,
-            kernel_size=3,
+            kernel_size=4,
             stride=2,
             load_bert=False,
         )
