@@ -103,7 +103,6 @@ class ClassificationTrainer(pl.LightningModule):
         size = len(output_results)
         acc, precision, recall, f1 = 0, 0, 0, 0
         for out in output_results:
-            # ここでエラーを吐いた
             acc += out["test_accuracy"]
             precision += out["test_precision"]
             recall += out["test_recall"]
