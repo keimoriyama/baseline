@@ -37,7 +37,8 @@ class ConvolutionModel(nn.Module):
             stride=self.stride,
         )
         self.ConvOut = math.ceil(
-            (self.config.hidden_size + 2 * 0 - (self.kernel_size - 1) - 1) / self.stride
+            ((self.config.hidden_size + 2 * 0 - (self.kernel_size - 1) - 1) + 1)
+            / self.stride
         )
         # batchsizeが1の時、BatchNormがエラーを吐く
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
