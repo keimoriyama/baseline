@@ -1,10 +1,14 @@
 import torch
 import torch.nn as nn
 
+
+
+
 class RandomModel(nn.Module):
-    def __init__(self,  out_dim) -> None:
+    def __init__(self, out_dim) -> None:
         super().__init__()
         self.out_dim = out_dim
+
     def forward(self, *args):
         return None
 
