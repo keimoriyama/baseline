@@ -26,10 +26,15 @@ def classification_train(data_path, config):
     out_size = max(df["attribute_id"]) + 1
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
+
     train, validate = train_test_split(df, test_size=0.2, stratify=df["attribute_id"])
     validate, test = train_test_split(
         validate, test_size=0.5, stratify=validate["attribute_id"]
     )
+    if debug:
+        train = train[: 8 * 2]
+        validate = validate[: 8 * 2]
+        epoch = 5
     print(len(train), len(validate), len(test))
 
     train_dataset = ClassificationDataset(train)
