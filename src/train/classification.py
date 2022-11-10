@@ -1,7 +1,7 @@
 import pandas as pd
 import ast
 
-from models import FlattenModel, SpecialTokenModel
+from models import FlattenModel, SpecialTokenModel, ConvolutionModel
 
 from sklearn.model_selection import train_test_split
 from dataset import ClassificationDataset
@@ -78,6 +78,16 @@ def classification_train(data_path, config):
             out_dim=out_size,
             hidden_dim=config.train.hidden_dim,
             dropout_rate=config.train.dropout_rate,
+            load_bert=False,
+        )
+    if config.model == "conv":
+        model = ConvolutionModel(
+            token_len=512,
+            out_dim=out_size,
+            hidden_dim=config.train.hidden_dim,
+            dropout_rate=config.train.dropout_rate,
+            kernel_size=3,
+            stride=2,
             load_bert=False,
         )
     classification_trainer = ClassificationTrainer(

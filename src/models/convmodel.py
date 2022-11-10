@@ -1,11 +1,20 @@
 import torch.nn as nn
 import torch
+
 from transformers import RobertaConfig, RobertaModel
+import math
 
 
-class SpecialTokenModel(nn.Module):
+class ConvolutionModel(nn.Module):
     def __init__(
-        self, token_len, hidden_dim, out_dim, dropout_rate, load_bert=False
+        self,
+        token_len,
+        hidden_dim,
+        out_dim,
+        dropout_rate,
+        kernel_size,
+        stride,
+        load_bert=False,
     ) -> None:
         super().__init__()
         self.token_len = token_len
@@ -19,23 +28,39 @@ class SpecialTokenModel(nn.Module):
             )
         else:
             self.bert = RobertaModel(config=self.config)
-
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.Conv1d = nn.Conv1d(
+            self.hidden_dim,
+            self.hidden_dim // 2,
+            kernel_size=self.kernel_size,
+            stride=self.stride,
+        )
+        self.ConvOut = math.ceil(
+            (self.config.hidden_size + 2 * 0 - (self.kernel_size - 1) - 1) / self.stride
+        )
         # batchsizeが1の時、BatchNormがエラーを吐く
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
+
         self.dropout = nn.Dropout(p=dropout_rate)
-        self.Linear1 = nn.Linear(self.config.hidden_size * 2, self.hidden_dim * 2)
+        self.Linear1 = nn.Linear(
+            self.ConvOut * self.hidden_dim // 2, self.hidden_dim * 2
+        )
         self.Linear2 = nn.Linear(self.hidden_dim * 2, self.hidden_dim)
         self.Linear3 = nn.Linear(self.hidden_dim, self.out_dim)
         self.params = (
             list(self.Linear1.parameters())
             + list(self.Linear2.parameters())
             + list(self.Linear3.parameters())
+            + list(self.Conv1d.parameters())
         )
 
     def model(self, input):
         batch_size = input.size(0)
-        out = self.Linear1(input)
+        out = self.Conv1d(input)
+        out = out.reshape(-1, self.hidden_dim // 2 * self.ConvOut)
+        out = self.Linear1(out)
         if batch_size != 1:
             out = self.batch_norm1(out)
         out = self.Linear2(self.dropout(out))
@@ -47,15 +72,7 @@ class SpecialTokenModel(nn.Module):
     def forward(self, input_ids, attention_mask, start_index, end_index):
         out = self.bert(input_ids, attention_mask=attention_mask)
         out = out["last_hidden_state"]
-        batch_size = input_ids.size(0)
-        # 最初と最後の特殊トークンに当たる特徴量を取得して繋げる
-        outputs = [
-            torch.cat((out[:, s][i], out[:, e][i]))
-            for i, (s, e) in enumerate(zip(start_index, end_index))
-        ]
-        outputs = torch.stack(outputs)
-        # out = out.reshape(-1, self.token_len * self.config.hidden_size)
-        out = self.model(outputs)
+        out = self.model(out)
         return out
 
     def get_params(self):
