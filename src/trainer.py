@@ -8,7 +8,7 @@ from torchmetrics import F1Score
 torch.autograd.set_detect_anomaly(True)
 
 class ClassificationTrainer(pl.LightningModule):
-    def __init__(self, alpha,model,learning_rate= 1e-5):
+    def __init__(self, alpha,model, learning_rate= 1e-5):
         super().__init__()
         self.alpha = alpha
         self.model = model
@@ -37,7 +37,7 @@ class ClassificationTrainer(pl.LightningModule):
             "train_recall": recall,
             "train_f1": f1
         }
-        self.log_dict(log_data, on_epoch=True, logger=True)
+        self.log_dict(log_data, on_epoch=True, logger=True, batch_size=len(batch))
         return loss
 
     def calc_metrics(self,  answer, result):
@@ -67,7 +67,7 @@ class ClassificationTrainer(pl.LightningModule):
             "valid_recall": recall,
             "valid_f1": f1
         }
-        self.log_dict(log_data, on_epoch=True, logger=True)
+        self.log_dict(log_data, on_epoch=True, logger=True, batch_size=len(batch))
         return 
 
     def test_step(self, batch, _):
@@ -85,7 +85,7 @@ class ClassificationTrainer(pl.LightningModule):
             "test_recall": recall,
             "test_f1": f1
         }
-        self.log_dict(log_data, on_epoch=True, logger=True)
+        self.log_dict(log_data, on_epoch=True, logger=True, batch_size=len(batch))
         return loss
 
     def test_epoch_end(self,output_results):

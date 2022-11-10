@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 def classification_train(data_path, config):
     df = pd.read_csv(data_path)
 
-    exp_name = config.name + "_{}".format(config.train.alpha)
+    exp_name = config.name + "_{}".format(config.model)
     epoch = config.train.epoch
     debug = config.debug
     gpu_num = torch.cuda.device_count()
@@ -48,21 +48,22 @@ def classification_train(data_path, config):
 
     checkpoint_callback = ModelCheckpoint(
     save_top_k=10,
-    monitor="validation_loss",
+    monitor="valid_loss",
     mode="min",
     dirpath="./model/baseline/",
     filename="model_{}_seed_{}".format(config.model, config.seed))
 
     trainer = pl.Trainer(
         max_epochs=epoch, logger=wandb_logger
-        , strategy="ddp", gpus=1, callbacks=[checkpoint_callback])
-    model = FlattenModel(
-            token_len=512,
-            out_dim=out_size,
-            hidden_dim=config.train.hidden_dim,
-            dropout_rate=config.train.dropout_rate,
-            load_bert=False)
-    classification_train = ClassificationTrainer(alpha=config.train.alpha, model=model)
-    trainer.fit(classification_train, train_dataloader, validate_dataloader)
-    trainer.test(classification_train, test_dataloader)
+        , strategy="ddp", gpus=gpu_num, callbacks=[checkpoint_callback])
+    if config.model == "flatten":
+        model = FlattenModel(
+                token_len=512,
+                out_dim=out_size,
+                hidden_dim=config.train.hidden_dim,
+                dropout_rate=config.train.dropout_rate,
+                load_bert=False)
+    classification_trainer = ClassificationTrainer(alpha=config.train.alpha, model=model)
+    trainer.fit(classification_trainer, train_dataloader, validate_dataloader)
+    trainer.test(classification_trainer, test_dataloader)
 
