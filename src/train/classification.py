@@ -55,6 +55,7 @@ def classification_train(data_path, config):
         mode="min",
         dirpath="./model/baseline/",
         filename="model_{}_seed_{}".format(config.model, config.seed),
+        save_weights_only=True
     )
 
     trainer = pl.Trainer(
