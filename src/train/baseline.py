@@ -1,4 +1,4 @@
-from models import FlattenModel, RandomModel
+from models import FlattenModel, RandomModel, ConvolutionModel, SpecialTokenModel
 
 from pytorch_lightning.callbacks import ModelCheckpoint
 
@@ -66,15 +66,34 @@ def baseline_train(data_path, config):
     if config.model == "random":
         model = RandomModel(out_dim=config.train.out_dim)
         trainer.test(model, test_dataloader)
-    elif config.model =="flatten":
+
+    if config.model == "flatten":
         model = FlattenModel(
             token_len=512,
             out_dim=config.train.out_dim,
             hidden_dim=config.train.hidden_dim,
             dropout_rate=config.train.dropout_rate,
-            load_bert=True,
+            load_bert=False,
+        )
+    if config.model == "special":
+        model = SpecialTokenModel(
+            token_len=512,
+            out_dim=config.train.out_dim,
+            hidden_dim=config.train.hidden_dim,
+            dropout_rate=config.train.dropout_rate,
+            load_bert=False,
+        )
+    if config.model == "conv":
+        model = ConvolutionModel(
+            token_len=512,
+            out_dim=config.train.out_dim,
+            hidden_dim=config.train.hidden_dim,
+            dropout_rate=config.train.dropout_rate,
+            kernel_size=4,
+            stride=2,
+            load_bert=False,
         )
 
-        model = BaselineModel(alpha=config.train.alpha, model=model)
-        trainer.fit(model, train_dataloader, validate_dataloader)
-        trainer.test(model, test_dataloader)
+    model = BaselineModel(alpha=config.train.alpha, model=model)
+    trainer.fit(model, train_dataloader, validate_dataloader)
+    trainer.test(model, test_dataloader)
