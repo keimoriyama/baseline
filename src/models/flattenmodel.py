@@ -52,7 +52,7 @@ class FlattenModel(nn.Module):
         out = self.Linear3(self.dropout(out))
         return out
 
-    def forward(self, input_ids, attention_mask, start_idx, end_idx):
+    def forward(self, input_ids, attention_mask, start_idx=-1, end_idx=-1):
         out = self.bert(input_ids, attention_mask=attention_mask)
         out = out["last_hidden_state"]
         out = out.reshape(-1, self.token_len * self.config.hidden_size)

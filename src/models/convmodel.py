@@ -70,7 +70,7 @@ class ConvolutionModel(nn.Module):
         out = self.Linear3(self.dropout(out))
         return out
 
-    def forward(self, input_ids, attention_mask, start_index, end_index):
+    def forward(self, input_ids, attention_mask, start_index=-1, end_index=-1):
         out = self.bert(input_ids, attention_mask=attention_mask)
         out = out["last_hidden_state"]
         out = self.model(out)

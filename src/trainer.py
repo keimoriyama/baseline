@@ -246,8 +246,8 @@ class BaselineModel(pl.LightningModule):
         self.logger.log_metrics({"test_precision": precision})
         self.logger.log_metrics({"test_recall": recall})
         self.logger.log_metrics({"test_f1": f1})
-        self.logger.log_metrics({"system_count": s_count})
-        self.logger.log_metrics({"crowd_count": c_count})
+        self.logger.log_metrics({"test_system_count": s_count})
+        self.logger.log_metrics({"test_crowd_count": c_count})
 
     def calc_all_metrics(self, model_ans, annotator):
         answer = annotator.to("cpu")
