@@ -23,8 +23,6 @@ class FlattenModel(nn.Module):
         else:
             self.bert = RobertaModel(config=self.config)
 
-        self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
-        self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
         # batchsizeが1の時、BatchNormがエラーを吐く
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
@@ -38,6 +36,8 @@ class FlattenModel(nn.Module):
             list(self.Linear1.parameters())
             + list(self.Linear2.parameters())
             + list(self.Linear3.parameters())
+            + list(self.batch_norm1.parameters())
+            + list(self.batch_norm2.parameters())
         )
 
     def model(self, input):
@@ -73,6 +73,9 @@ class FlattenModel(nn.Module):
                 c_count += 1
         model_ans = torch.Tensor(model_ans)
         return model_ans, s_count, c_count
+
+    def load(self, path):
+        self.model.load_state_dict(torch.load(path))
 
     def get_params(self):
         return self.params

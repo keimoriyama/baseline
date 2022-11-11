@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import random
 
 
 
@@ -12,18 +12,16 @@ class RandomModel(nn.Module):
     def forward(self, *args):
         return None
 
-    def predict(self, system_dicision, crowd_dicision):
+    @classmethod
+    def predict(cls, system_dicision, crowd_dicision, crowd_count):
         model_ans = []
-        s_count, c_count = 0, 0
-        batch_size = len(system_dicision)
-        # import ipdb;ipdb.set_trace()
-        out = torch.rand(batch_size, self.out_dim)
-        for i, o in enumerate(out):
-            if o[0] > o[1]:
-                model_ans.append(system_dicision[i])
-                s_count += 1
-            else:
+        crowd_i = random.sample(range(len(crowd_dicision)), crowd_count)
+        counts = 0
+        for i in range(len(crowd_dicision)):
+            if i in crowd_i:
                 model_ans.append(crowd_dicision[i])
-                c_count += 1
-        model_ans = torch.Tensor(model_ans)
-        return model_ans, s_count, c_count
+                counts += 1
+            else:
+                model_ans.append(system_dicision[i])
+        assert counts == crowd_count
+        return model_ans

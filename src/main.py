@@ -3,11 +3,16 @@ from pytorch_lightning.utilities.seed import seed_everything
 from train import baseline_train, classification_train
 
 from omegaconf import OmegaConf
+import argparse
 
 
 def main():
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--alpha", help="hyperparams for exp")
     config = OmegaConf.load("./config/baseline.yml")
+    args = parser.parse_args()
+    config.train.alpha = float(args.alpha)
+    print(config)
     seed_everything(config.seed)
     if config.task == "classification":
         data_path = "./data/classification.csv"

@@ -121,7 +121,7 @@ class ClassificationTrainer(pl.LightningModule):
         return optimizer
 
 
-class BaselineModel(pl.LightningModule):
+class BaselineModelTrainer(pl.LightningModule):
     def __init__(self, alpha, model, learning_rate=1e-5):
         super().__init__()
         self.alpha = alpha
@@ -212,7 +212,9 @@ class BaselineModel(pl.LightningModule):
         system_out = batch["system_out"]
         crowd_dicision = batch["cloud_dicision"]
         annotator = batch["correct"]
-        out = self.forward(input_ids, attention_mask=attention_mask)
+        start_idx = batch['start_idx']
+        end_idx = batch['end_idx']
+        out = self.forward(input_ids, attention_mask,start_idx,end_idx)
         if out is not None:
             model_ans, s_count, c_count = self.model.predict(
                 out, system_out, system_dicision, crowd_dicision
@@ -252,6 +254,35 @@ class BaselineModel(pl.LightningModule):
         self.logger.log_metrics({"test_f1": f1})
         self.logger.log_metrics({"test_system_count": s_count})
         self.logger.log_metrics({"test_crowd_count": c_count})
+    
+    def predict_step(self, batch, _):
+        input_ids = batch["tokens"]
+        attention_mask = batch["attention_mask"]
+        system_dicision = batch["system_dicision"]
+        system_out = batch["system_out"]
+        crowd_dicision = batch["cloud_dicision"]
+        annotator = batch["correct"]
+        start_idx = batch['start_idx']
+        end_idx = batch['end_idx']
+        out = self.forward(input_ids, attention_mask,start_idx,end_idx)
+        if out is not None:
+            model_ans, s_count, c_count = self.model.predict(
+                out, system_out, system_dicision, crowd_dicision
+            )
+        else:
+            model_ans, s_count, c_count = self.model.predict(
+                system_dicision, crowd_dicision
+            )
+        acc, precision, recall, f1 = self.calc_all_metrics(model_ans, annotator)
+        log_data = {
+            "test_accuracy": acc,
+            "test_precision": precision,
+            "test_recall": recall,
+            "test_f1": f1.item(),
+            "system_count": s_count,
+            "crowd_count": c_count,
+        }
+        return log_data
 
     def calc_all_metrics(self, model_ans, annotator):
         answer = annotator.to("cpu")
@@ -269,6 +300,7 @@ class BaselineModel(pl.LightningModule):
         output = torch.stack((system_out, output[:, 1]), -1)
         out = self.softmax(output) + 1e-10
         m1 = (cloud_dicision == annotator).to(int)
+        # import ipdb;ipdb.set_trace()
         loss = -(self.alpha * m1 + (1 - m1)) * torch.log2(out[:, 0]) - m1 * torch.log2(
             out[:, 1]
         )
