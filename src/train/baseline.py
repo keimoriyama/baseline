@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 
 
 def baseline_train(data_path, config):
-    exp_name = config.name + "_{}".format(config.train.alpha)
+    exp_name = config.name + "_{}_{}".format(config.train.alpha, config.model)
     epoch = config.train.epoch
     debug = config.debug
     gpu_num = torch.cuda.device_count()
@@ -53,10 +53,10 @@ def baseline_train(data_path, config):
     # 学習部分
     checkpoint_callback = ModelCheckpoint(
     save_top_k=1,
-    monitor="validation_loss",
+    monitor="valid_loss",
     mode="min",
     dirpath="./model/baseline/",
-    filename="model_alpha_{}_seed_{}".format(config.train.alpha, config.seed),
+    filename="model_{}_alpha_{}_seed_{}".format(config.model,config.train.alpha, config.seed),
     save_weights_only=True
 )
 

@@ -12,3 +12,4 @@ logs
 core
 train.csv
 src/__pycache__/dataset.cpython-310.pyc
+core-node.1677211
