@@ -26,10 +26,15 @@ def classification_train(data_path, config):
     out_size = max(df["attribute_id"]) + 1
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
+
     train, validate = train_test_split(df, test_size=0.2, stratify=df["attribute_id"])
     validate, test = train_test_split(
         validate, test_size=0.5, stratify=validate["attribute_id"]
     )
+    if debug:
+        train = train[: 8 * 2]
+        validate = validate[: 8 * 2]
+        epoch = 5
     print(len(train), len(validate), len(test))
 
     train_dataset = ClassificationDataset(train)
@@ -43,14 +48,14 @@ def classification_train(data_path, config):
         validate_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
     )
     test_dataloader = DataLoader(
-        validate_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
+        test_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
     )
     # loggerの用意
     wandb_logger = WandbLogger(name=exp_name, project="classification")
     wandb_logger.log_hyperparams(config.train)
 
     checkpoint_callback = ModelCheckpoint(
-        save_top_k=10,
+        save_top_k=1,
         monitor="valid_loss",
         mode="min",
         dirpath="./model/baseline/",

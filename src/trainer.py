@@ -97,7 +97,7 @@ class ClassificationTrainer(pl.LightningModule):
             "test_f1": f1,
         }
         self.log_dict(log_data, on_epoch=True, logger=True, batch_size=len(batch))
-        return loss
+        return log_data
 
     def test_epoch_end(self, output_results):
         size = len(output_results)
