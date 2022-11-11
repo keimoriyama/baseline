@@ -53,7 +53,7 @@ def baseline_train(data_path, config):
     # 学習部分
     checkpoint_callback = ModelCheckpoint(
     save_top_k=1,
-    monitor="valid_loss",
+    monitor="validation_loss",
     mode="min",
     dirpath="./model/baseline/",
     filename="model_{}_alpha_{}_seed_{}".format(config.model,config.train.alpha, config.seed),

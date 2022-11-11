@@ -74,6 +74,9 @@ class SimulateDataset(Dataset):
         text = ["<s>"] + text + ["</s>"]
         attention_mask = [0] * len(text)
 
+        start_idx = 0
+        end_idx = len(text) - 1
+
         text = self.padding(text, "<pad>", self.num_tokens)
         attention_mask = self.padding(attention_mask, 0, self.num_tokens)
 
@@ -85,6 +88,8 @@ class SimulateDataset(Dataset):
             "system_out": system_out,
             "tokens": torch.LongTensor(token_id),
             "attention_mask": torch.LongTensor(attention_mask),
+            "start_idx": start_idx,
+            "end_idx": end_idx,
         }
 
     def preprocess(self, data):
