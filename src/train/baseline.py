@@ -52,7 +52,7 @@ def baseline_train(data_path, config):
     wandb_logger.log_hyperparams(config.train)
     # 学習部分
     checkpoint_callback = ModelCheckpoint(
-    save_top_k=10,
+    save_top_k=1,
     monitor="validation_loss",
     mode="min",
     dirpath="./model/baseline/",

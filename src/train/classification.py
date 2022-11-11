@@ -48,14 +48,14 @@ def classification_train(data_path, config):
         validate_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
     )
     test_dataloader = DataLoader(
-        validate_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
+        test_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
     )
     # loggerの用意
     wandb_logger = WandbLogger(name=exp_name, project="classification")
     wandb_logger.log_hyperparams(config.train)
 
     checkpoint_callback = ModelCheckpoint(
-        save_top_k=10,
+        save_top_k=1,
         monitor="valid_loss",
         mode="min",
         dirpath="./model/baseline/",
