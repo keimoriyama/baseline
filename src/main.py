@@ -9,10 +9,11 @@ import argparse
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alpha", help="hyperparams for exp")
+    parser.add_argument("--model", help="choose model to trian and evaluate")
     config = OmegaConf.load("./config/baseline.yml")
     args = parser.parse_args()
     config.train.alpha = float(args.alpha)
-    print(config)
+    config.model = args.model
     seed_everything(config.seed)
     if config.task == "classification":
         data_path = "./data/classification.csv"

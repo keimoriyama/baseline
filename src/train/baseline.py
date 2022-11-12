@@ -27,6 +27,7 @@ def baseline_train(data_path, config):
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
     train, validate = train_test_split(df, test_size=0.2)
     validate, test = train_test_split(validate, test_size=0.5)
+    print(len(train), len(validate), len(test))
     if debug:
         train = train[: 8 * 2]
         validate = validate[: 8 * 2]
@@ -60,9 +61,13 @@ def baseline_train(data_path, config):
     dirpath="./model/baseline/",
     filename="model_{}_alpha_{}_seed_{}".format(config.model,config.train.alpha, config.seed),
     save_weights_only=True)
-
+    """
     trainer = pl.Trainer(
         max_epochs=epoch, logger=wandb_logger, strategy="ddp", gpus=gpu_num,callbacks=[checkpoint_callback]
+    )
+    """
+    trainer = pl.Trainer(
+        max_epochs=epoch, logger=wandb_logger,accelerator = "gpu", callbacks=[checkpoint_callback]
     )
 
     model = get_model(config)
