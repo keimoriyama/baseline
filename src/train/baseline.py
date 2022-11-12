@@ -110,32 +110,6 @@ def get_model(config):
         )
     return model
 
-def calc_scores(config, alpha, seed):
-    model_path = "model/baseline/model_alpha_{}_seed_{}.ckpt".format(alpha, seed)
-    model = get_model(config)
-    model_trainer = BaselineModelTrainer.load_from_checkpoint(model_path,alpha=config.train.alpha, model=model)
-    df = pd.read_csv("./data/train.csv")
-    df["text"] = [ast.literal_eval(d) for d in df["text"]]
-    _, validate = train_test_split(df, test_size=0.2)
-    _, test = train_test_split(validate, test_size=0.5)
-    test_dataset = SimulateDataset(test)
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=config.train.batch_size,
-        num_workers=config.dataset.num_workers
-    )
-
-    exp_name = "compare_w_random_" + config.name + "_{}_{}".format(config.train.alpha, config.model)
-    # loggerの用意
-    wandb_logger = WandbLogger(name=exp_name, project="baseline")
-    wandb_logger.log_hyperparams(config.train)
-
-    trainer = pl.Trainer(
-        logger=wandb_logger,accelerator="gpu"
-    )
-    predictions = trainer.predict(model_trainer, test_dataloader)
-    eval_with_random(predictions, test, wandb_logger)
-    wandb_logger.finalize("success")
-
 def eval_with_random(predictions, test, logger):
     size = len(predictions)
     crowd_d = test['cloud_dicision'].to_list()
