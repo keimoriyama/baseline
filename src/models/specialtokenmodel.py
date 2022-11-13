@@ -23,7 +23,6 @@ class SpecialTokenModel(nn.Module):
         # batchsizeが1の時、BatchNormがエラーを吐く
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
-        self.dropout = nn.Dropout(p=dropout_rate)
         self.Linear1 = nn.Linear(self.config.hidden_size * 2, self.hidden_dim * 2)
         self.Linear2 = nn.Linear(self.hidden_dim * 2, self.hidden_dim)
         self.Linear3 = nn.Linear(self.hidden_dim, self.out_dim)
@@ -31,6 +30,8 @@ class SpecialTokenModel(nn.Module):
             list(self.Linear1.parameters())
             + list(self.Linear2.parameters())
             + list(self.Linear3.parameters())
+            + list(self.batch_norm1.parameters())
+            +list(self.batch_norm2.parameters())
         )
 
     def model(self, input):
@@ -38,10 +39,10 @@ class SpecialTokenModel(nn.Module):
         out = self.Linear1(input)
         if batch_size != 1:
             out = self.batch_norm1(out)
-        out = self.Linear2(self.dropout(out))
+        out = self.Linear2(out)
         if batch_size != 1:
             out = self.batch_norm2(out)
-        out = self.Linear3(self.dropout(out))
+        out = self.Linear3(out)
         return out
 
     def forward(self, input_ids, attention_mask, start_index=-1, end_index=-1):
@@ -72,6 +73,6 @@ class SpecialTokenModel(nn.Module):
                 c_count += 1
         model_ans = torch.Tensor(model_ans)
         return model_ans, s_count, c_count
-
+        
     def get_params(self):
         return self.params

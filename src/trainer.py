@@ -122,7 +122,7 @@ class ClassificationTrainer(pl.LightningModule):
 
 
 class BaselineModelTrainer(pl.LightningModule):
-    def __init__(self, alpha, model, learning_rate=1e-5):
+    def __init__(self, alpha, model, save_path, learning_rate=1e-5):
         super().__init__()
         self.alpha = alpha
         self.model = model
@@ -130,6 +130,8 @@ class BaselineModelTrainer(pl.LightningModule):
         self.params = self.model.parameters()
         self.f1 = F1Score()
         self.lr = learning_rate
+        self.path = save_path
+        self.min_valid_loss = 1e1000
 
     def forward(self, input_ids, attention_mask, start_idx, end_idx):
         return self.model(input_ids, attention_mask,start_idx, end_idx)
@@ -198,11 +200,15 @@ class BaselineModelTrainer(pl.LightningModule):
         return log_data
 
     def validation_epoch_end(self, validation_epoch_outputs):
-        system_all_count, crowd_all_count = 0, 0
+        system_all_count, crowd_all_count, loss = 0, 0, 0
         for out in validation_epoch_outputs:
             system_all_count += out["system_count"]
             crowd_all_count += out["crowd_count"]
+            loss += out["validation_loss"]
+        loss /= len(validation_epoch_outputs)
         data = {"system_count": system_all_count, "crowd_count": crowd_all_count}
+        if loss <= self.min_valid_loss:
+            torch.save(self.model.state_dict(), self.path)
         self.log_dict(data)
 
     def test_step(self, batch, _):

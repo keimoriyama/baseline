@@ -44,7 +44,6 @@ class ConvolutionModel(nn.Module):
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
 
-        self.dropout = nn.Dropout(p=dropout_rate)
         self.Linear1 = nn.Linear(
             self.ConvOut * self.hidden_dim // 2, self.hidden_dim * 2
         )
@@ -55,6 +54,8 @@ class ConvolutionModel(nn.Module):
             + list(self.Linear2.parameters())
             + list(self.Linear3.parameters())
             + list(self.Conv1d.parameters())
+            + list(self.batch_norm1.parameters())
+            + list(self.batch_norm2.parameters())
         )
 
     def model(self, input):
@@ -64,10 +65,10 @@ class ConvolutionModel(nn.Module):
         out = self.Linear1(out)
         if batch_size != 1:
             out = self.batch_norm1(out)
-        out = self.Linear2(self.dropout(out))
+        out = self.Linear2(out)
         if batch_size != 1:
             out = self.batch_norm2(out)
-        out = self.Linear3(self.dropout(out))
+        out = self.Linear3(out)
         return out
 
     def forward(self, input_ids, attention_mask, start_index=-1, end_index=-1):

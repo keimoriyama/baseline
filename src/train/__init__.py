@@ -1,2 +1,2 @@
-from train.baseline import baseline_train, calc_scores
+from train.baseline import baseline_train
 from train.classification import classification_train
