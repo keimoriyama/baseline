@@ -51,13 +51,6 @@ def baseline_train(data_path, config):
     )
 
     # loggerの用意
-    """
-    wandb_logger = WandbLogger(name=exp_name, project="baseline")
-    wandb_logger.log_hyperparams(config.train)
-    wandb_logger.log_hyperparams(config.mode)
-    wandb_logger.log_hyperparams(config.seed)
-    wandb_logger.log_hyperparams(config.model)
-    """
     mlflow_logger = MLFlowLogger(experiment_name = exp_name)
     mlflow_logger.log_hyperparams(config.train)
     # import ipdb;ipdb.set_trace()
