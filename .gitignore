@@ -7,7 +7,6 @@ model/*
 *.pyc
 *.ckpt
 wandb
-mlruns
 logs
 core
 train.csv
