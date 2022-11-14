@@ -51,18 +51,30 @@ def baseline_train(data_path, config):
     )
 
     # loggerの用意
-    mlflow_logger = MLFlowLogger(experiment_name = exp_name)
-    mlflow_logger.log_hyperparams(config.train)
-    # import ipdb;ipdb.set_trace()
-    mlflow_logger.log_hyperparams({"mode": config.mode})
-    mlflow_logger.log_hyperparams({"seed": config.seed})
-    mlflow_logger.log_hyperparams({"model": config.model})
+    wandb_logger = WandbLogger(name=exp_name, project="baseline")
+    wandb_logger.log_hyperparams(config.train)
+    wandb_logger.log_hyperparams(config.mode)
+    wandb_logger.log_hyperparams(config.seed)
+    wandb_logger.log_hyperparams(config.model)
+    
     if config.mode == "train":
-        # train(config, wandb_logger, train_dataloader, validate_dataloader)
-        train(config, mlflow_logger, train_dataloader, validate_dataloader)
+        mlflow_logger = MLFlowLogger(experiment_name = exp_name)
+        mlflow_logger.log_hyperparams(config.train)
+        # import ipdb;ipdb.set_trace()
+        mlflow_logger.log_hyperparams({"mode": config.mode})
+        mlflow_logger.log_hyperparams({"seed": config.seed})
+        mlflow_logger.log_hyperparams({"model": config.model})
+        train(config, wandb_logger, train_dataloader, validate_dataloader)
+        #train(config, mlflow_logger, train_dataloader, validate_dataloader)
     else:
-        # eval(config, test, wandb_logger, test_dataloader)
-        eval(config, test, mlflow_logger, test_dataloader)
+        mlflow_logger = MLFlowLogger(experiment_name = "test")
+        mlflow_logger.log_hyperparams(config.train)
+        # import ipdb;ipdb.set_trace()
+        mlflow_logger.log_hyperparams({"mode": config.mode})
+        mlflow_logger.log_hyperparams({"seed": config.seed})
+        mlflow_logger.log_hyperparams({"model": config.model})
+        eval(config, test, wandb_logger, test_dataloader)
+        # eval(config, test, mlflow_logger, test_dataloader)
 
 def train(config, logger, train_dataloader, validate_dataloader):
     gpu_num = torch.cuda.device_count()

@@ -11,6 +11,8 @@ def main():
     parser.add_argument("--alpha", help="hyperparams for exp")
     parser.add_argument("--model", help="choose model to trian and evaluate")
     parser.add_argument("--mode", help="choose train or evaluate")
+    parser.add_argument("--exp_name", help="expriment name")
+
     config = OmegaConf.load("./config/baseline.yml")
     args = parser.parse_args()
     config.train.alpha = float(args.alpha)

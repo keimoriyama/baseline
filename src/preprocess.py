@@ -23,7 +23,7 @@ def main():
         system["system_out"] = system["system_true_count"] / (
             system["system_true_count"] + system["system_false_count"]
         )
-        threthold = [2, 3]
+        threthold = [1, 4]
         for t in threthold:
             dicision_df = system["system_true_count"] >= t
             column_name = ""
