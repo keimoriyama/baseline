@@ -27,15 +27,15 @@ def main():
         for t in threthold:
             dicision_df = system["system_true_count"] >= t
             column_name = ""
-            if t == 2:
+            if t == threthold[0]:
                 column_name = "cloud_dicision"
-            elif t == 3:
+            elif t == threthold[1]:
                 column_name = "system_dicision"
             df[column_name] = dicision_df
         df["text"] = df["text_text"].apply(tokenize_text)
         df = pd.merge(df, system)
-        df = (
-            df[
+        # import ipdb;ipdb.set_trace()
+        df = df[
                 [
                     "system_dicision",
                     "cloud_dicision",
@@ -44,10 +44,7 @@ def main():
                     "attribute",
                     "system_out",
                 ]
-            ]
-            .replace(True, 1)
-            .replace(False, 0)
-        )
+            ].replace(True, 1).replace(False, 0)
         df.to_csv("./data/train.csv", index=False)
     elif config.task == "classification":
         df = pd.read_csv(data_path, index_col=0)
