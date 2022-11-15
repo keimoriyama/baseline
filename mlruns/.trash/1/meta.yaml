@@ -1,4 +1,7 @@
 artifact_location: file:./mlruns/1
+creation_time: null
 experiment_id: '1'
+last_update_time: 1668473835082
 lifecycle_stage: active
 name: test
+tags: {}
