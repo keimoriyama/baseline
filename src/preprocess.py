@@ -1,6 +1,8 @@
 import pandas as pd
 from tokenizer import JanomeBpeTokenizer
 
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
+
 from omegaconf import OmegaConf
 
 data_path = "./data/system_df.csv"
@@ -23,12 +25,13 @@ def main():
         system["system_out"] = system["system_true_count"] / (
             system["system_true_count"] + system["system_false_count"]
         )
-        threthold = [1, 4]
+        threthold = [2,5]
         for t in threthold:
             dicision_df = system["system_true_count"] >= t
+            # import ipdb;ipdb.set_trace()
             column_name = ""
             if t == threthold[0]:
-                column_name = "cloud_dicision"
+                column_name = "crowd_dicision"
             elif t == threthold[1]:
                 column_name = "system_dicision"
             df[column_name] = dicision_df
@@ -38,7 +41,7 @@ def main():
         df = df[
                 [
                     "system_dicision",
-                    "cloud_dicision",
+                    "crowd_dicision",
                     "correct",
                     "text",
                     "attribute",
@@ -46,6 +49,9 @@ def main():
                 ]
             ].replace(True, 1).replace(False, 0)
         df.to_csv("./data/train.csv", index=False)
+        print(calc_metrics(df['correct'], df['system_dicision']))
+        print(calc_metrics(df['correct'], df['crowd_dicision']))
+
     elif config.task == "classification":
         df = pd.read_csv(data_path, index_col=0)
         attribute_list = df["attribute"].value_counts(normalize=True) * 100 >= 1.0
@@ -59,6 +65,12 @@ def main():
         df["text"] = df["text_text"].apply(tokenize_text)
         df.to_csv("./data/classification.csv", index=False)
 
+
+def calc_metrics(ans, out):
+    pre = precision_score(ans,out)
+    recall = recall_score(ans, out)
+    f1 = f1_score(ans, out)
+    return (f1,pre, recall)
 
 def tokenize_text(text):
     return tokenizer.tokenize(text)[0]

@@ -101,7 +101,7 @@ def eval(config, test, logger, test_dataloader):
         attention_mask = batch["attention_mask"].to(device)
         system_dicision = batch["system_dicision"].to(device)
         system_out = batch["system_out"].to(device)
-        crowd_dicision = batch["cloud_dicision"].to(device)
+        crowd_dicision = batch["crowd_dicision"].to(device)
         annotator = batch["correct"].to(device)
         start_idx = batch['start_idx'].to(device)
         end_idx = batch['end_idx'].to(device)
@@ -188,7 +188,7 @@ def calc_scores(config, alpha, seed):
 
 def eval_with_random(predictions, test, logger):
     size = len(predictions)
-    crowd_d = test['cloud_dicision'].to_list()
+    crowd_d = test['crowd_dicision'].to_list()
     system_d = test['system_dicision'].to_list()
     answer = test['correct'].to_list()
     acc, precision, recall, f1, s_count, c_count = 0, 0, 0, 0, 0, 0

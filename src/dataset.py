@@ -68,7 +68,7 @@ class SimulateDataset(Dataset):
         d = self.data[idx]
         text = d["text"]
         system_dicision = d["system_dicision"]
-        cloud_dicision = d["cloud_dicision"]
+        crowd_dicision = d["crowd_dicision"]
         correct = d["correct"]
         system_out = d["system_out"]
         text = ["<s>"] + text + ["</s>"]
@@ -83,7 +83,7 @@ class SimulateDataset(Dataset):
         token_id = [self.vocab.get(token, self.vocab["<unk>"]) for token in text]
         return {
             "system_dicision": system_dicision,
-            "cloud_dicision": cloud_dicision,
+            "crowd_dicision": crowd_dicision,
             "correct": correct,
             "system_out": system_out,
             "tokens": torch.LongTensor(token_id),
