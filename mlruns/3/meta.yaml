@@ -1,0 +1,4 @@
+artifact_location: file:./mlruns/3
+experiment_id: '3'
+lifecycle_stage: active
+name: baseline_0.1_conv
