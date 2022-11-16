@@ -98,7 +98,7 @@ class ClassificationTrainer(pl.LightningModule):
         acc = acc.item()
         precision = precision.item()
         recall = recall.item()
-        f1 = self.f1(result, answer).item()
+        f1 = self.f1(result, answer,average='macro').item()
         return (acc, precision, recall, f1)
 
     def test_epoch_end(self, output_results):
