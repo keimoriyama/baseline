@@ -16,13 +16,13 @@ def main():
 
     config = OmegaConf.load("./config/baseline.yml")
     args = parser.parse_args()
-    if config.alpha is not None:
+    if args.alpha is not None:
         config.train.alpha = float(args.alpha)
-    if config.model is not None:
+    if args.model is not None:
         config.model = args.model
-    if config.mode is not None:
+    if args.mode is not None:
         config['mode'] = args.mode
-    if config.task == "classification":
+    if args.task == "classification":
         data_path = "./data/classification.csv"
         classification_train(data_path, config)
     elif config.task == "baseline":
