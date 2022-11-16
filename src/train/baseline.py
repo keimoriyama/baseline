@@ -16,9 +16,10 @@ import torch
 from torch.utils.data import DataLoader
 from torchmetrics.functional import precision_recall
 from torchmetrics import F1Score
-
+from pytorch_lightning.utilities.seed import seed_everything
 
 def baseline_train(data_path, config):
+    seed_everything(config.seed)
     exp_name = config.name + "_{}_{}".format(config.train.alpha, config.model)
     debug = config.debug
     batch_size = config.train.batch_size
@@ -65,16 +66,13 @@ def baseline_train(data_path, config):
         mlflow_logger.log_hyperparams({"mode": config.mode})
         mlflow_logger.log_hyperparams({"seed": config.seed})
         mlflow_logger.log_hyperparams({"model": config.model})
-        # train(config, wandb_logger, train_dataloader, validate_dataloader)
         train(config, mlflow_logger, train_dataloader, validate_dataloader)
     else:
         mlflow_logger = MLFlowLogger(experiment_name = "test")
         mlflow_logger.log_hyperparams(config.train)
-        # import ipdb;ipdb.set_trace()
         mlflow_logger.log_hyperparams({"mode": config.mode})
         mlflow_logger.log_hyperparams({"seed": config.seed})
         mlflow_logger.log_hyperparams({"model": config.model})
-        # eval(config, test, wandb_logger, test_dataloader)
         eval(config, test, mlflow_logger, test_dataloader)
 
 def train(config, logger, train_dataloader, validate_dataloader):
@@ -119,7 +117,7 @@ def eval(config, test, logger, test_dataloader):
             "system_count": s_count,
             "crowd_count": c_count,
         }]
-    eval_with_random(predictions, test, logger)
+    eval_with_random(predictions, test, logger, config)
 
 def calc_metrics(answer, result):
     f1_score = F1Score()
@@ -186,7 +184,7 @@ def calc_scores(config, alpha, seed):
     eval_with_random(predictions, test, wandb_logger)
     wandb_logger.finalize("success")
 
-def eval_with_random(predictions, test, logger):
+def eval_with_random(predictions, test, logger, config):
     size = len(predictions)
     crowd_d = test['crowd_dicision'].to_list()
     system_d = test['system_dicision'].to_list()
@@ -209,10 +207,24 @@ def eval_with_random(predictions, test, logger):
     logger.log_metrics({"test_f1": f1})
     logger.log_metrics({"test_system_count": s_count})
     logger.log_metrics({"test_crowd_count": c_count})
+    accs, precisions, recalls, f1s = [], [], [],[]
+    for i in range(100):
+        seed_everything(config.seed + i)
+        random_pred = RandomModel.predict(system_d, crowd_d, c_count)
+        acc = sum([a == r for a, r in zip(answer, random_pred)]) / len(answer)
+        precision, recall, f1, _ = precision_recall_fscore_support(random_pred, answer, average="macro")
+        accs.append(acc)
+        precisions.append(precision)
+        recalls.append(recall)
+        f1s.append(f1)
 
-    random_pred = RandomModel.predict(system_d, crowd_d, c_count)
-    acc = sum([a == r for a, r in zip(answer, random_pred)]) / len(answer)
-    precision, recall, f1, _ = precision_recall_fscore_support(random_pred, answer, average="macro")
+    def calc_mean(l):
+        return sum(l)/len(l)
+
+    acc = calc_mean(accs)
+    precision = calc_mean(precisions)
+    recall = calc_mean(recalls)
+    f1 = calc_mean(f1s)
     logger.log_metrics({"random_accuracy": acc})
     logger.log_metrics({"random_precision": precision})
     logger.log_metrics({"random_recall": recall})

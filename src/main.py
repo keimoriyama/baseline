@@ -1,4 +1,4 @@
-from pytorch_lightning.utilities.seed import seed_everything
+
 
 from train import baseline_train, classification_train
 
@@ -12,13 +12,13 @@ def main():
     parser.add_argument("--model", help="choose model to trian and evaluate")
     parser.add_argument("--mode", help="choose train or evaluate")
     parser.add_argument("--exp_name", help="expriment name")
+    parser.add_argument("--task", help="expriment task classification or baseline")
 
     config = OmegaConf.load("./config/baseline.yml")
     args = parser.parse_args()
     config.train.alpha = float(args.alpha)
     config.model = args.model
     config['mode'] = args.mode
-    seed_everything(config.seed)
     if config.task == "classification":
         data_path = "./data/classification.csv"
         classification_train(data_path, config)
