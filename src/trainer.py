@@ -45,16 +45,6 @@ class ClassificationTrainer(pl.LightningModule):
         self.log_dict(log_data, on_epoch=True, logger=True, batch_size=len(batch))
         return loss
 
-    def calc_metrics(self, answer, result):
-        # import ipdb;ipdb.set_trace()
-        acc = sum(answer == result) / len(answer)
-        precision, recall = precision_recall(result, answer)
-        acc = acc.item()
-        precision = precision.item()
-        recall = recall.item()
-        f1 = self.f1(result, answer)
-        return (acc, precision, recall, f1)
-
     def validation_step(self, batch, _):
         input_ids = batch["tokens"]
         attention_mask = batch["attention_mask"]
@@ -88,9 +78,11 @@ class ClassificationTrainer(pl.LightningModule):
         )
         loss = self.loss(out, attribute_id)
         answer = torch.argmax(out, dim=1)
-        acc, precision, recall, f1 = self.calc_metrics(answer, attribute_id)
+        import ipdb;ipdb.set_trace()
+        
+        acc, precision, recall, f1 = self.calc_metrics(attribute_id, answer)
         log_data = {
-            "test_loss": loss,
+            "test_loss": loss.item(),
             "test_accuracy": acc,
             "test_precision": precision,
             "test_recall": recall,
@@ -98,10 +90,21 @@ class ClassificationTrainer(pl.LightningModule):
         }
         self.log_dict(log_data, on_epoch=True, logger=True, batch_size=len(batch))
         return log_data
+    
+    def calc_metrics(self, answer, result):
+        # import ipdb;ipdb.set_trace()
+        acc = sum(answer == result) / len(answer)
+        precision, recall = precision_recall(result, answer, average='macro', multiclass=True, num_classes = self.model.Linear3.out_features)
+        acc = acc.item()
+        precision = precision.item()
+        recall = recall.item()
+        f1 = self.f1(result, answer,average='macro').item()
+        return (acc, precision, recall, f1)
 
     def test_epoch_end(self, output_results):
         size = len(output_results)
         acc, precision, recall, f1 = 0, 0, 0, 0
+        
         for out in output_results:
             acc += out["test_accuracy"]
             precision += out["test_precision"]

@@ -8,7 +8,7 @@ from dataset import ClassificationDataset
 from trainer import ClassificationTrainer
 
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger, MLFlowLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 import torch
@@ -50,9 +50,14 @@ def classification_train(data_path, config):
     test_dataloader = DataLoader(
         test_dataset, batch_size=batch_size, num_workers=config.dataset.num_workers
     )
-    # loggerの用意
-    wandb_logger = WandbLogger(name=exp_name, project="classification")
-    wandb_logger.log_hyperparams(config.train)
+    # loggerの用意 
+    mlflow_logger = MLFlowLogger(experiment_name = exp_name)
+    mlflow_logger.log_hyperparams(config.train)
+    # import ipdb;ipdb.set_trace()
+    # import ipdb;ipdb.set_trace()
+    # mlflow_logger.log_hyperparams({"mode": config.mode})
+    mlflow_logger.log_hyperparams({"seed": config.seed})
+    mlflow_logger.log_hyperparams({"model": config.model})
 
     checkpoint_callback = ModelCheckpoint(
         save_top_k=1,
@@ -65,7 +70,7 @@ def classification_train(data_path, config):
 
     trainer = pl.Trainer(
         max_epochs=epoch,
-        logger=wandb_logger,
+        logger=mlflow_logger,
         strategy="ddp",
         gpus=gpu_num,
         callbacks=[checkpoint_callback],
