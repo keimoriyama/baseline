@@ -208,6 +208,7 @@ def eval_with_random(predictions, test, logger, config):
     logger.log_metrics({"test_system_count": s_count})
     logger.log_metrics({"test_crowd_count": c_count})
     accs, precisions, recalls, f1s = [], [], [],[]
+    # シード値かえて100かい回す
     for i in range(100):
         seed_everything(config.seed + i)
         random_pred = RandomModel.predict(system_d, crowd_d, c_count)
