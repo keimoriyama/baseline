@@ -54,7 +54,7 @@ def main():
                 if (
                     (i == threshold[0])
                     and (d["system_dicision"] == d["correct"])
-                    and (random.uniform(0, 1) > 0.5)
+                    and (random.uniform(0, 1) > 0.6)
                 ):
                     d["system_dicision"] = not (d["system_dicision"])
                 data.append(d)
