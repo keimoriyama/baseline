@@ -1,5 +1,3 @@
-
-
 from train import baseline_train, classification_train
 
 from omegaconf import OmegaConf
@@ -21,13 +19,13 @@ def main():
     if args.model is not None:
         config.model = args.model
     if args.mode is not None:
-        config['mode'] = args.mode
+        config["mode"] = args.mode
     if config.task == "classification":
         data_path = "./data/classification.csv"
         classification_train(data_path, config)
     elif config.task == "baseline":
-        
-        data_path = "./data/train.csv"
+
+        data_path = "./data/train_{}.csv".format(config.dataset.name)
         baseline_train(data_path, config)
 
 
