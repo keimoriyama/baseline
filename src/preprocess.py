@@ -21,7 +21,6 @@ def main():
         system = df.filter(regex="index_id|system_*")
         system["system_true_count"] = (system == True).sum(axis=1)
         system["system_false_count"] = (system == False).sum(axis=1)
-        # import ipdb;ipdb.set_trace()
         system["system_out"] = system["system_true_count"] / (
             system["system_true_count"] + system["system_false_count"]
         )
