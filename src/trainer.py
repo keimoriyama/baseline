@@ -15,7 +15,7 @@ class ClassificationTrainer(pl.LightningModule):
         self.model = model
         self.softmax = torch.nn.Softmax(dim=1)
         self.params = self.model.parameters()
-        self.f1 = F1Score()
+        self.f1 = F1Score(num_classes = self.model.Linear3.out_features, multiclass= True)
         self.lr = learning_rate
         self.loss = nn.CrossEntropyLoss()
 
@@ -78,7 +78,6 @@ class ClassificationTrainer(pl.LightningModule):
         )
         loss = self.loss(out, attribute_id)
         answer = torch.argmax(out, dim=1)
-        import ipdb;ipdb.set_trace()
         
         acc, precision, recall, f1 = self.calc_metrics(attribute_id, answer)
         log_data = {
@@ -98,7 +97,8 @@ class ClassificationTrainer(pl.LightningModule):
         acc = acc.item()
         precision = precision.item()
         recall = recall.item()
-        f1 = self.f1(result, answer,average='macro').item()
+        f1 = self.f1(result, answer)
+        f1 = f1.item()
         return (acc, precision, recall, f1)
 
     def test_epoch_end(self, output_results):

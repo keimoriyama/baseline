@@ -22,10 +22,11 @@ def main():
         config.model = args.model
     if args.mode is not None:
         config['mode'] = args.mode
-    if args.task == "classification":
+    if config.task == "classification":
         data_path = "./data/classification.csv"
         classification_train(data_path, config)
     elif config.task == "baseline":
+        
         data_path = "./data/train.csv"
         baseline_train(data_path, config)
 
