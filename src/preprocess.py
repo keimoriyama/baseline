@@ -33,33 +33,46 @@ def main():
             system["system_true_count"] + system["system_false_count"]
         )
         df = pd.merge(df, system)
-        # ワーカーのデータ作成
-        threthold = 2
-        dicision_df = system["system_true_count"] >= threthold
-        # import ipdb;ipdb.set_trace()
-        column_name = "crowd_dicision"
-        df[column_name] = dicision_df
-        # システムのデータ作成
-        special_attribute = "所在地"
-        threthold = [0, 2]
-        data = []
-        i = -1
-        for _, d in df.iterrows():
-            if d["attribute"] == special_attribute:
-                i = threthold[1]
-            else:
-                i = threthold[0]
-            d["system_dicision"] = d["system_true_count"] > i
-            if (
-                (i == threthold[0])
-                and (d["system_dicision"] == d["correct"])
-                and (random.uniform(0, 1) > 0.5)
-            ):
-                d["system_dicision"] = not (d["system_dicision"])
-            data.append(d)
-        worker_df = pd.DataFrame(data)
-        worker_df = worker_df[["index_id", "system_dicision"]]
-        df = pd.merge(worker_df, df)
+        if config.dataset.name == "worse_system":
+            # ワーカーのデータ作成
+            threshold = 2
+            dicision_df = system["system_true_count"] >= threshold
+            # import ipdb;ipdb.set_trace()
+            column_name = "crowd_dicision"
+            df[column_name] = dicision_df
+            # システムのデータ作成
+            special_attribute = "所在地"
+            threshold = [0, 2]
+            data = []
+            i = -1
+            for _, d in df.iterrows():
+                if d["attribute"] == special_attribute:
+                    i = threshold[1]
+                else:
+                    i = threshold[0]
+                d["system_dicision"] = d["system_true_count"] > i
+                if (
+                    (i == threshold[0])
+                    and (d["system_dicision"] == d["correct"])
+                    and (random.uniform(0, 1) > 0.5)
+                ):
+                    d["system_dicision"] = not (d["system_dicision"])
+                data.append(d)
+            worker_df = pd.DataFrame(data)
+            worker_df = worker_df[["index_id", "system_dicision"]]
+            df = pd.merge(worker_df, df)
+        elif config.dataset.name == "only_threshold":
+            threthold = [2, 5]
+            for t in threthold:
+                dicision_df = system["system_true_count"] >= t
+                # import ipdb;ipdb.set_trace()
+                column_name = ""
+                if t == threthold[0]:
+                    column_name = "crowd_dicision"
+                elif t == threthold[1]:
+                    column_name = "system_dicision"
+                df[column_name] = dicision_df
+            df = pd.merge(df, system)
         df["text"] = df["text_text"].apply(tokenize_text)
         # import ipdb;ipdb.set_trace()
         df = (
@@ -76,7 +89,7 @@ def main():
             .replace(True, 1)
             .replace(False, 0)
         )
-        df.to_csv("./data/train.csv", index=False)
+        df.to_csv("./data/train_{}.csv".format(config.dataset.name), index=False)
         calc_metrics(df["correct"], df["system_dicision"])
         calc_metrics(df["correct"], df["crowd_dicision"])
 
