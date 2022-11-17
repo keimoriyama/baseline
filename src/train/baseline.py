@@ -84,7 +84,7 @@ def eval(config, test, logger, test_dataloader):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = get_model(config)
     path = "./model/baseline/model_{}_alpha_{}_seed_{}.pth".format(config.model,config.train.alpha, config.seed)
-    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path, map_location=device))
     model=model.to(device)
     predictions = []
     for batch in tqdm(test_dataloader):
@@ -151,32 +151,6 @@ def get_model(config):
         )
     return model
 
-def calc_scores(config, alpha, seed):
-    model_path = "model/baseline/model_alpha_{}_seed_{}.ckpt".format(alpha, seed)
-    model = get_model(config)
-    model_trainer = BaselineModelTrainer.load_from_checkpoint(model_path,alpha=config.train.alpha, model=model)
-    df = pd.read_csv("./data/train.csv")
-    df["text"] = [ast.literal_eval(d) for d in df["text"]]
-    _, validate = train_test_split(df, test_size=0.2)
-    _, test = train_test_split(validate, test_size=0.5)
-    test_dataset = SimulateDataset(test)
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=config.train.batch_size,
-        num_workers=config.dataset.num_workers
-    )
-
-    exp_name = "compare_w_random_" + config.name + "_{}_{}".format(config.train.alpha, config.model)
-    # loggerの用意
-    wandb_logger = WandbLogger(name=exp_name, project="baseline")
-    wandb_logger.log_hyperparams(config.train)
-
-    trainer = pl.Trainer(
-        logger=wandb_logger,accelerator="gpu"
-    )
-    predictions = trainer.predict(model_trainer, test_dataloader)
-    eval_with_random(predictions, test, wandb_logger)
-    wandb_logger.finalize("success")
-
 def eval_with_random(predictions, test, logger, config):
     size = len(predictions)
     crowd_d = test['crowd_dicision'].to_list()
@@ -204,6 +178,7 @@ def eval_with_random(predictions, test, logger, config):
     # シード値かえて100かい回す
     for i in range(100):
         seed_everything(config.seed + i)
+        import ipdb;ipdb.set_trace()
         random_pred = RandomModel.predict(system_d, crowd_d, c_count)
         acc = sum([a == r for a, r in zip(answer, random_pred)]) / len(answer)
         precision, recall, f1, _ = precision_recall_fscore_support(random_pred, answer, average="macro")

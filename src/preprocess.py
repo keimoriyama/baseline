@@ -1,7 +1,7 @@
 import pandas as pd
 from tokenizer import JanomeBpeTokenizer
 
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score,accuracy_score
 
 from omegaconf import OmegaConf
 
@@ -49,8 +49,8 @@ def main():
                 ]
             ].replace(True, 1).replace(False, 0)
         df.to_csv("./data/train.csv", index=False)
-        print(calc_metrics(df['correct'], df['system_dicision']))
-        print(calc_metrics(df['correct'], df['crowd_dicision']))
+        calc_metrics(df['correct'], df['system_dicision'])
+        calc_metrics(df['correct'], df['crowd_dicision'])
 
     elif config.task == "classification":
         df = pd.read_csv(data_path, index_col=0)
@@ -67,10 +67,11 @@ def main():
 
 
 def calc_metrics(ans, out):
+    acc = accuracy_score(ans, out)
     pre = precision_score(ans,out)
     recall = recall_score(ans, out)
     f1 = f1_score(ans, out)
-    return (f1,pre, recall)
+    print("accuracy: {:.3}, f1: {:.3}, precision: {:.3}, recall: {:.3}".format(acc, f1,pre,recall))
 
 def tokenize_text(text):
     return tokenizer.tokenize(text)[0]
