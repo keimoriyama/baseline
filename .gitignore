@@ -10,5 +10,6 @@ wandb
 logs
 core
 train.csv
-src/__pycache__/dataset.cpython-310.pyc
+src/__pycache__
 core-node.1677211
+eda_notebooks
