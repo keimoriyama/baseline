@@ -1,5 +1,5 @@
 artifact_uri: file:./mlruns/8/8ecbfd24133644a6ab42a9c291744b52/artifacts
-end_time: null
+end_time: 1668602169131
 entry_point_name: ''
 experiment_id: '8'
 lifecycle_stage: active
@@ -10,6 +10,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1668580810348
-status: 1
+status: 3
 tags: []
 user_id: acd14210nv
