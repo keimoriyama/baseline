@@ -178,7 +178,7 @@ def eval_with_random(predictions, test, logger, config):
     # シード値かえて100かい回す
     for i in range(100):
         seed_everything(config.seed + i)
-        import ipdb;ipdb.set_trace()
+        # import ipdb;ipdb.set_trace()
         random_pred = RandomModel.predict(system_d, crowd_d, c_count)
         acc = sum([a == r for a, r in zip(answer, random_pred)]) / len(answer)
         precision, recall, f1, _ = precision_recall_fscore_support(random_pred, answer, average="macro")

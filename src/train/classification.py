@@ -53,9 +53,6 @@ def classification_train(data_path, config):
     # loggerの用意 
     mlflow_logger = MLFlowLogger(experiment_name = exp_name)
     mlflow_logger.log_hyperparams(config.train)
-    # import ipdb;ipdb.set_trace()
-    # import ipdb;ipdb.set_trace()
-    # mlflow_logger.log_hyperparams({"mode": config.mode})
     mlflow_logger.log_hyperparams({"seed": config.seed})
     mlflow_logger.log_hyperparams({"model": config.model})
 
