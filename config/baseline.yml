@@ -5,6 +5,7 @@ debug: false
 model: conv
 dataset:
   num_workers: 8
+  name: worse_system
 train:
   alpha: 0.8
   epoch: 300
