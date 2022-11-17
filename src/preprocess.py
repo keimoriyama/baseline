@@ -1,7 +1,15 @@
 import pandas as pd
 from tokenizer import JanomeBpeTokenizer
 
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score,accuracy_score
+from sklearn.metrics import (
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    f1_score,
+    accuracy_score,
+)
+
+import random
 
 from omegaconf import OmegaConf
 
@@ -24,20 +32,38 @@ def main():
         system["system_out"] = system["system_true_count"] / (
             system["system_true_count"] + system["system_false_count"]
         )
-        threthold = [2,5]
-        for t in threthold:
-            dicision_df = system["system_true_count"] >= t
-            # import ipdb;ipdb.set_trace()
-            column_name = ""
-            if t == threthold[0]:
-                column_name = "crowd_dicision"
-            elif t == threthold[1]:
-                column_name = "system_dicision"
-            df[column_name] = dicision_df
-        df["text"] = df["text_text"].apply(tokenize_text)
         df = pd.merge(df, system)
+        # ワーカーのデータ作成
+        threthold = 2
+        dicision_df = system["system_true_count"] >= threthold
         # import ipdb;ipdb.set_trace()
-        df = df[
+        column_name = "crowd_dicision"
+        df[column_name] = dicision_df
+        # システムのデータ作成
+        special_attribute = "所在地"
+        threthold = [0, 2]
+        data = []
+        i = -1
+        for _, d in df.iterrows():
+            if d["attribute"] == special_attribute:
+                i = threthold[1]
+            else:
+                i = threthold[0]
+            d["system_dicision"] = d["system_true_count"] > i
+            if (
+                (i == threthold[0])
+                and (d["system_dicision"] == d["correct"])
+                and (random.uniform(0, 1) > 0.5)
+            ):
+                d["system_dicision"] = not (d["system_dicision"])
+            data.append(d)
+        worker_df = pd.DataFrame(data)
+        worker_df = worker_df[["index_id", "system_dicision"]]
+        df = pd.merge(worker_df, df)
+        df["text"] = df["text_text"].apply(tokenize_text)
+        # import ipdb;ipdb.set_trace()
+        df = (
+            df[
                 [
                     "system_dicision",
                     "crowd_dicision",
@@ -46,10 +72,13 @@ def main():
                     "attribute",
                     "system_out",
                 ]
-            ].replace(True, 1).replace(False, 0)
+            ]
+            .replace(True, 1)
+            .replace(False, 0)
+        )
         df.to_csv("./data/train.csv", index=False)
-        calc_metrics(df['correct'], df['system_dicision'])
-        calc_metrics(df['correct'], df['crowd_dicision'])
+        calc_metrics(df["correct"], df["system_dicision"])
+        calc_metrics(df["correct"], df["crowd_dicision"])
 
     elif config.task == "classification":
         df = pd.read_csv(data_path, index_col=0)
@@ -67,10 +96,15 @@ def main():
 
 def calc_metrics(ans, out):
     acc = accuracy_score(ans, out)
-    pre = precision_score(ans,out)
+    pre = precision_score(ans, out)
     recall = recall_score(ans, out)
     f1 = f1_score(ans, out)
-    print("accuracy: {:.3}, f1: {:.3}, precision: {:.3}, recall: {:.3}".format(acc, f1,pre,recall))
+    print(
+        "accuracy: {:.3}, f1: {:.3}, precision: {:.3}, recall: {:.3}".format(
+            acc, f1, pre, recall
+        )
+    )
+
 
 def tokenize_text(text):
     return tokenizer.tokenize(text)[0]
