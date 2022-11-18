@@ -1,0 +1,4 @@
+artifact_location: file:./mlruns/15
+experiment_id: '15'
+lifecycle_stage: active
+name: baseline_special
