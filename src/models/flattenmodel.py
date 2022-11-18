@@ -27,6 +27,7 @@ class FlattenModel(nn.Module):
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
         self.dropout = nn.Dropout(p=dropout_rate)
+        self.ReLU = nn.ReLU()
         self.Linear1 = nn.Linear(
             self.token_len * self.config.hidden_size, self.hidden_dim * 2
         )
@@ -43,10 +44,10 @@ class FlattenModel(nn.Module):
     def model(self, input):
         # import ipdb;ipdb.set_trace()
         batch_size = input.size(0)
-        out = self.Linear1(input)
+        out = self.ReLU(self.Linear1(input))
         if batch_size != 1:
             out = self.batch_norm1(out)
-        out = self.Linear2(self.dropout(out))
+        out = self.ReLU(self.Linear2(self.dropout(out)))
         if batch_size != 1:
             out = self.batch_norm2(out)
         out = self.Linear3(self.dropout(out))

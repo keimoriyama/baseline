@@ -44,6 +44,7 @@ class ConvolutionModel(nn.Module):
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
 
+        self.ReLU = nn.ReLU()
         self.Linear1 = nn.Linear(
             self.ConvOut * self.hidden_dim // 2, self.hidden_dim * 2
         )
@@ -60,12 +61,12 @@ class ConvolutionModel(nn.Module):
 
     def model(self, input):
         batch_size = input.size(0)
-        out = self.Conv1d(input)
+        out = self.ReLU(self.Conv1d(input))
         out = out.reshape(-1, self.hidden_dim // 2 * self.ConvOut)
-        out = self.Linear1(out)
+        out = self.ReLU(self.Linear1(out))
         if batch_size != 1:
             out = self.batch_norm1(out)
-        out = self.Linear2(out)
+        out = self.ReLU(self.Linear2(out))
         if batch_size != 1:
             out = self.batch_norm2(out)
         out = self.Linear3(out)

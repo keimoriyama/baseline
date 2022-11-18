@@ -23,6 +23,7 @@ class SpecialTokenModel(nn.Module):
         # batchsizeが1の時、BatchNormがエラーを吐く
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)
         self.batch_norm2 = nn.BatchNorm1d(self.hidden_dim)
+        self.ReLU = nn.ReLU()
         self.Linear1 = nn.Linear(self.config.hidden_size * 2, self.hidden_dim * 2)
         self.Linear2 = nn.Linear(self.hidden_dim * 2, self.hidden_dim)
         self.Linear3 = nn.Linear(self.hidden_dim, self.out_dim)
@@ -36,10 +37,10 @@ class SpecialTokenModel(nn.Module):
 
     def model(self, input):
         batch_size = input.size(0)
-        out = self.Linear1(input)
+        out = self.ReLU(self.Linear1(input))
         if batch_size != 1:
             out = self.batch_norm1(out)
-        out = self.Linear2(out)
+        out = self.ReLU(self.Linear2(out))
         if batch_size != 1:
             out = self.batch_norm2(out)
         out = self.Linear3(out)
