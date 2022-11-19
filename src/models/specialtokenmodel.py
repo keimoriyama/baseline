@@ -13,12 +13,9 @@ class SpecialTokenModel(nn.Module):
         self.out_dim = out_dim
         self.dropout_rate = dropout_rate
         self.config = RobertaConfig.from_pretrained("./model/config.json")
+        self.bert = RobertaModel(config=self.config)
         if load_bert:
-            self.bert = RobertaModel.from_pretrained(
-                "./model/pytorch_model.bin", config=self.config
-            )
-        else:
-            self.bert = RobertaModel(config=self.config)
+            self.bert.load_state_dict(torch.load("./model/bert_model.pth"))
 
         # batchsizeが1の時、BatchNormがエラーを吐く
         self.batch_norm1 = nn.BatchNorm1d(self.hidden_dim * 2)

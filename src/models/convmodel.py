@@ -22,12 +22,9 @@ class ConvolutionModel(nn.Module):
         self.out_dim = out_dim
         self.dropout_rate = dropout_rate
         self.config = RobertaConfig.from_pretrained("./model/config.json")
+        self.bert = RobertaModel(config=self.config)
         if load_bert:
-            self.bert = RobertaModel.from_pretrained(
-                "./model/pytorch_model.bin", config=self.config
-            )
-        else:
-            self.bert = RobertaModel(config=self.config)
+            self.bert.load_state_dict(torch.load("./model/bert_model.pth"))
         self.kernel_size = kernel_size
         self.stride = stride
         self.Conv1d = nn.Conv1d(
