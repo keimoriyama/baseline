@@ -129,7 +129,7 @@ def get_model(config):
             out_dim=config.train.out_dim,
             hidden_dim=config.train.hidden_dim,
             dropout_rate=config.train.dropout_rate,
-            load_bert=False,
+            load_bert=True,
         )
     if config.model == "special":
         model = SpecialTokenModel(
@@ -137,7 +137,7 @@ def get_model(config):
             out_dim=config.train.out_dim,
             hidden_dim=config.train.hidden_dim,
             dropout_rate=config.train.dropout_rate,
-            load_bert=False,
+            load_bert=True,
         )
     if config.model == "conv":
         model = ConvolutionModel(
@@ -147,7 +147,7 @@ def get_model(config):
             dropout_rate=config.train.dropout_rate,
             kernel_size=4,
             stride=2,
-            load_bert=False,
+            load_bert=True,
         )
     return model
 
