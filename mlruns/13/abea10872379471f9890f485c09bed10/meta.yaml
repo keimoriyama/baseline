@@ -1,0 +1,15 @@
+artifact_uri: file:./mlruns/13/abea10872379471f9890f485c09bed10/artifacts
+end_time: 1669015696817
+entry_point_name: ''
+experiment_id: '13'
+lifecycle_stage: active
+name: ''
+run_id: abea10872379471f9890f485c09bed10
+run_uuid: abea10872379471f9890f485c09bed10
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1668993846983
+status: 3
+tags: []
+user_id: moriyama
