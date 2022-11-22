@@ -15,7 +15,7 @@ class RandomModel(nn.Module):
     @classmethod
     def predict(cls, system_dicision, crowd_dicision, crowd_count):
         model_ans = []
-        crowd_i = random.sample(range(len(crowd_dicision)), crowd_count)
+        crowd_i = set(random.sample(range(len(crowd_dicision)), crowd_count))
         counts = 0
         for i in range(len(crowd_dicision)):
             if i in crowd_i:

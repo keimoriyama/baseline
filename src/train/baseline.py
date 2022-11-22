@@ -177,8 +177,7 @@ def eval_with_random(predictions, test, logger, config):
     accs, precisions, recalls, f1s = [], [], [],[]
     # シード値かえて100かい回す
     for i in range(100):
-        seed_everything(config.seed + i)
-        # import ipdb;ipdb.set_trace()
+        seed_everything(config.seed + i+1)
         random_pred = RandomModel.predict(system_d, crowd_d, c_count)
         acc = sum([a == r for a, r in zip(answer, random_pred)]) / len(answer)
         precision, recall, f1, _ = precision_recall_fscore_support(random_pred, answer, average="macro")
@@ -189,7 +188,7 @@ def eval_with_random(predictions, test, logger, config):
 
     def calc_mean(l):
         return sum(l)/len(l)
-
+        
     acc = calc_mean(accs)
     precision = calc_mean(precisions)
     recall = calc_mean(recalls)

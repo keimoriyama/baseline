@@ -24,7 +24,6 @@ def main():
         data_path = "./data/classification.csv"
         classification_train(data_path, config)
     elif config.task == "baseline":
-
         data_path = "./data/train_{}.csv".format(config.dataset.name)
         baseline_train(data_path, config)
 

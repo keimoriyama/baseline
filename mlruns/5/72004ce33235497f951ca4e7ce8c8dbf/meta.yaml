@@ -1,5 +1,5 @@
 artifact_uri: file:./mlruns/5/72004ce33235497f951ca4e7ce8c8dbf/artifacts
-end_time: null
+end_time: 1669084500917
 entry_point_name: ''
 experiment_id: '5'
 lifecycle_stage: active
@@ -10,6 +10,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1669062792803
-status: 1
+status: 3
 tags: []
 user_id: moriyama
