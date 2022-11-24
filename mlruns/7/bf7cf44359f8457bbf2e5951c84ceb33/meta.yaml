@@ -1,0 +1,15 @@
+artifact_uri: file:./mlruns/7/bf7cf44359f8457bbf2e5951c84ceb33/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '7'
+lifecycle_stage: active
+name: ''
+run_id: bf7cf44359f8457bbf2e5951c84ceb33
+run_uuid: bf7cf44359f8457bbf2e5951c84ceb33
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1669190470584
+status: 1
+tags: []
+user_id: moriyama
