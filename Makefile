@@ -1,4 +1,4 @@
 train:
 	rm -rf logs/logs.txt
 	rm -rf logs/stdout.txt
-	qsub train.sh
+	qsub -g gcc50441 train.sh

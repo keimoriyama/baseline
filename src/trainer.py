@@ -186,7 +186,7 @@ class BaselineModelTrainer(pl.LightningModule):
             out, system_out, system_dicision, crowd_dicision, annotator
         ).item()
 
-        model_ans, s_count, c_count = self.model.predict(
+        model_ans, s_count, c_count, _ = self.model.predict(
             out, system_out, system_dicision, crowd_dicision
         )
         acc, precision, recall, f1 = self.calc_all_metrics(model_ans, annotator)
