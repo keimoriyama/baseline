@@ -23,8 +23,9 @@ def main():
     df = df.reset_index(drop=True)
     df["index_id"] = [i + 1000 for i in range(len(df))]
     df["text_text"] = df["text_text"].apply(remove_return)
+    # import ipdb;ipdb.set_trace()
     if config.task == "baseline":
-        df = df.filter(regex="index_id|system_*|correct|text_text|attribute")
+        df = df.filter(regex="index_id|system_*|correct|text_text|attribute|page_id")
         df = df.fillna(False)
         system = df.filter(regex="index_id|system_*")
         system["system_true_count"] = (system == True).sum(axis=1)
@@ -74,10 +75,10 @@ def main():
                 df[column_name] = dicision_df
             df = pd.merge(df, system)
         df["text"] = df["text_text"].apply(tokenize_text)
-        # import ipdb;ipdb.set_trace()
+        
         df = (
             df[
-                [
+                ["page_id",
                     "system_dicision",
                     "crowd_dicision",
                     "correct",

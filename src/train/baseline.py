@@ -87,6 +87,7 @@ def eval(config, test, logger, test_dataloader):
     model.load_state_dict(torch.load(path, map_location=device))
     model=model.to(device)
     predictions = []
+    data = []
     for batch in tqdm(test_dataloader):
         input_ids = batch["tokens"].to(device)
         attention_mask = batch["attention_mask"].to(device)
@@ -96,11 +97,28 @@ def eval(config, test, logger, test_dataloader):
         annotator = batch["correct"].to(device)
         start_idx = batch['start_idx'].to(device)
         end_idx = batch['end_idx'].to(device)
+        text = batch['text']
+        attribute = batch['attribute']
         answer = annotator.to("cpu")
         out = model(input_ids, attention_mask,start_idx,end_idx)
-        model_ans, s_count, c_count = model.predict(
+        model_ans, s_count, c_count, method = model.predict(
             out, system_out, system_dicision, crowd_dicision
         )
+        
+        texts = []
+        for i in range(len(text[0])):
+            s = ""
+            for t in text:
+                if t[i] == "<s>":
+                    continue
+                elif t[i] == "</s>":
+                    break
+                s += t[i]
+            texts.append(s)
+        for t, m_a, m,att,ans in zip(texts,model_ans, method, attribute, answer):
+            d = {"text": t, "attribute": att, "model answer": m_a.item(), "model choise": m, "answer": ans.item()}
+            data.append(d)
+
         acc, precision, recall, f1 = calc_metrics(answer, model_ans)
         predictions += [{
             "test_accuracy": acc,
@@ -110,6 +128,9 @@ def eval(config, test, logger, test_dataloader):
             "system_count": s_count,
             "crowd_count": c_count,
         }]
+    df = pd.DataFrame(data)
+    title = "result_model_{}_alpha_{}_seed_{}.csv".format(config.model,config.train.alpha, config.seed)
+    df.to_csv("./output/"+title, index=False)
     eval_with_random(predictions, test, logger, config)
 
 def calc_metrics(answer, result):
@@ -193,6 +214,7 @@ def eval_with_random(predictions, test, logger, config):
     precision = calc_mean(precisions)
     recall = calc_mean(recalls)
     f1 = calc_mean(f1s)
+    print(acc, precision, recall, f1)
     logger.log_metrics({"random_accuracy": acc})
     logger.log_metrics({"random_precision": precision})
     logger.log_metrics({"random_recall": recall})

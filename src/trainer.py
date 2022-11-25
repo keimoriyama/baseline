@@ -308,9 +308,8 @@ class BaselineModelTrainer(pl.LightningModule):
         # log2(0)が入るのを防ぐために、微小値を足しておく
         output = torch.stack((system_out, output[:, 1]), -1)
         out = self.softmax(output) + 1e-10
-        # m1 = (cloud_dicision == annotator).to(int)
-        m1 = (system_dicision != annotator).to(int)
-        # import ipdb;ipdb.set_trace()
+        m1 = (cloud_dicision == annotator).to(int)
+        # m1 = (system_dicision != annotator).to(int)
         loss = -(self.alpha * m1 + (1 - m1)) * torch.log2(out[:, 0]) - m1 * torch.log2(
             out[:, 1]
         )

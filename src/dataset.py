@@ -18,6 +18,7 @@ class ClassificationDataset(Dataset):
         text = d['text']
         attribute = d['attribute']
         attribute_id = d['attribute_id']
+        page_id = d['page_id']
         text = ["<s>"] + text + ["</s>"]
         attention_mask = [0] * len(text)
         start_idx = 0
@@ -28,6 +29,8 @@ class ClassificationDataset(Dataset):
         token_id = [self.vocab.get(token, self.vocab["<unk>"]) for token in text]
 
         return {
+            "text": text,
+            "page_id": page_id,
             "tokens": torch.LongTensor(token_id),
             "attention_mask": torch.LongTensor(attention_mask),
             "start_idx": start_idx,
@@ -71,6 +74,7 @@ class SimulateDataset(Dataset):
         crowd_dicision = d["crowd_dicision"]
         correct = d["correct"]
         system_out = d["system_out"]
+        attribute = d['attribute']
         text = ["<s>"] + text + ["</s>"]
         attention_mask = [0] * len(text)
 
@@ -81,7 +85,10 @@ class SimulateDataset(Dataset):
         attention_mask = self.padding(attention_mask, 0, self.num_tokens)
 
         token_id = [self.vocab.get(token, self.vocab["<unk>"]) for token in text]
+
         return {
+            "text": text,
+            "attribute": attribute,
             "system_dicision": system_dicision,
             "crowd_dicision": crowd_dicision,
             "correct": correct,

@@ -77,6 +77,7 @@ class ConvolutionModel(nn.Module):
     
     def predict(self, out, system_out, system_dicision, crowd_dicision):
         model_ans = []
+        system_crowd = []
         s_count, c_count = 0, 0
         for i, (s_out, c_out) in enumerate(zip(system_out, out[:, 1])):
             s_out = s_out.item()
@@ -84,11 +85,13 @@ class ConvolutionModel(nn.Module):
             if s_out > c_out:
                 model_ans.append(system_dicision[i])
                 s_count += 1
+                system_crowd.append("system")
             else:
                 model_ans.append(crowd_dicision[i])
                 c_count += 1
+                system_crowd.append("crowd")
         model_ans = torch.Tensor(model_ans)
-        return model_ans, s_count, c_count
+        return model_ans, s_count, c_count, system_crowd
 
     def get_params(self):
         return self.params
