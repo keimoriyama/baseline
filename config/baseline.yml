@@ -4,7 +4,7 @@ task: baseline
 debug: false
 model: conv
 dataset:
-  num_workers: 8
+  num_workers: 1
   name: worse_system
 train:
   alpha: 0.8

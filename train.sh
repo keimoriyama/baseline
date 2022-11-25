@@ -32,4 +32,4 @@ echo "working directory is {$PWD}"
 ALPHA=0
 MODEL=conv
 python src/main.py --alpha $ALPHA --model $MODEL --mode train
-python src/main.py --alpha $ALPHA --model $MODEL --mode eval
+# python src/main.py --alpha $ALPHA --model $MODEL --mode eval
