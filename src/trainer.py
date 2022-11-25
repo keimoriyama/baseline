@@ -158,7 +158,7 @@ class BaselineModelTrainer(pl.LightningModule):
             out, system_out, system_dicision, crowd_dicision, annotator
         )
         self.log_dict({"train_loss": loss}, on_epoch=True, on_step=True, logger=True)
-        model_ans, _, _ = self.model.predict(
+        model_ans, _, _ , _= self.model.predict(
             out, system_out, system_dicision, crowd_dicision
         )
         acc, precision, recall, f1 = self.calc_all_metrics(model_ans, annotator)
