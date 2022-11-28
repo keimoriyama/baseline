@@ -9,13 +9,13 @@ from dataset import SimulateDataset
 from trainer import BaselineModelTrainer
 
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger, MLFlowLogger
+from pytorch_lightning.loggers import  MLFlowLogger
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
 import torch
 from torch.utils.data import DataLoader
 from torchmetrics.functional import precision_recall
-from torchmetrics import F1Score
+from torchmetrics import F1Score, ConfusionMatrix
 from pytorch_lightning.utilities.seed import seed_everything
 
 def baseline_train(data_path, config):
@@ -116,7 +116,7 @@ def eval(config, test, logger, test_dataloader):
                 s += t[i]
             texts.append(s)
         for t, m_a, m,att,ans in zip(texts,model_ans, method, attribute, answer):
-            d = {"text": t, "attribute": att, "model answer": m_a.item(), "model choise": m, "answer": ans.item()}
+            d = {"text": t, "attribute": att, "model answer": int(m_a.item()), "model choise": m, "answer": ans.item()}
             data.append(d)
 
         acc, precision, recall, f1 = calc_metrics(answer, model_ans)
@@ -129,6 +129,16 @@ def eval(config, test, logger, test_dataloader):
             "crowd_count": c_count,
         }]
     df = pd.DataFrame(data)
+    # import ipdb;ipdb.set_trace()
+    c_mat = confusion_matrix(df['answer'], df['model answer'])
+    tn = c_mat[0][0]
+    fn = c_mat[1][0]
+    tp = c_mat[1][1]
+    fp = c_mat[0][1]
+    logger.log_metrics({"test true negative": tn})
+    logger.log_metrics({"test false negative": fn})
+    logger.log_metrics({"test true positive": tp})
+    logger.log_metrics({"test false positive": fp})
     title = "result_model_{}_alpha_{}_seed_{}.csv".format(config.model,config.train.alpha, config.seed)
     df.to_csv("./output/"+title, index=False)
     eval_with_random(predictions, test, logger, config)
@@ -196,12 +206,18 @@ def eval_with_random(predictions, test, logger, config):
     logger.log_metrics({"test_system_count": s_count})
     logger.log_metrics({"test_crowd_count": c_count})
     accs, precisions, recalls, f1s = [], [], [],[]
+    tns, tps, fns, fps, = [], [], [], []
     # シード値かえて100かい回す
     for i in range(100):
         seed_everything(config.seed + i+1)
         random_pred = RandomModel.predict(system_d, crowd_d, c_count)
         acc = sum([a == r for a, r in zip(answer, random_pred)]) / len(answer)
         precision, recall, f1, _ = precision_recall_fscore_support(random_pred, answer, average="macro")
+        c_mat = confusion_matrix(answer, random_pred)
+        tns.append(c_mat[0][0])
+        fns.append(c_mat[1][0])
+        tps.append(c_mat[1][1])
+        fps.append(c_mat[0][1])
         accs.append(acc)
         precisions.append(precision)
         recalls.append(recall)
@@ -214,9 +230,17 @@ def eval_with_random(predictions, test, logger, config):
     precision = calc_mean(precisions)
     recall = calc_mean(recalls)
     f1 = calc_mean(f1s)
+    tn = calc_mean(tns)
+    tp = calc_mean(tps)
+    fn = calc_mean(fns)
+    fp = calc_mean(fps)
     print(acc, precision, recall, f1)
     logger.log_metrics({"random_accuracy": acc})
     logger.log_metrics({"random_precision": precision})
     logger.log_metrics({"random_recall": recall})
     logger.log_metrics({"random_f1": f1})
+    logger.log_metrics({"random true negative": tn})
+    logger.log_metrics({"random false negative": fn})
+    logger.log_metrics({"random true positive": tp})
+    logger.log_metrics({"random false positive": fp})
 
