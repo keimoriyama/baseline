@@ -1,10 +1,11 @@
 artifact_uri: file:./mlruns/7/36422611222440e5b09b89bb2aa922ed/artifacts
+deleted_time: 1669607906941
 end_time: null
 entry_point_name: ''
 experiment_id: '7'
-lifecycle_stage: active
-name: ''
+lifecycle_stage: deleted
 run_id: 36422611222440e5b09b89bb2aa922ed
+run_name: ''
 run_uuid: 36422611222440e5b09b89bb2aa922ed
 source_name: ''
 source_type: 4
