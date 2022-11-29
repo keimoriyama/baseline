@@ -1,0 +1,15 @@
+artifact_uri: file:./mlruns/7/f7b9f91529e64726ab707ec54b08dbdb/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '7'
+lifecycle_stage: active
+name: ''
+run_id: f7b9f91529e64726ab707ec54b08dbdb
+run_uuid: f7b9f91529e64726ab707ec54b08dbdb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1669668524211
+status: 1
+tags: []
+user_id: acd14210nv
