@@ -9,6 +9,8 @@ from sklearn.metrics import (
     accuracy_score,
 )
 
+from collections import defaultdict
+
 import random
 
 from omegaconf import OmegaConf
@@ -74,11 +76,66 @@ def main():
                     column_name = "system_dicision"
                 df[column_name] = dicision_df
             df = pd.merge(df, system)
+
+        elif config.dataset.name=="artificial_data":
+            count = df['attribute'].value_counts()
+            c_att, s_att = [], []
+            for i, a in enumerate(count.index):
+                if i % 2 == 0:
+                    c_att.append(a)
+                else:
+                    s_att.append(a)
+            crowd_ans, system_ans = [],[]
+            for i in range(len(df)):
+                crowd = defaultdict(str)
+                d=df.iloc[i]
+                attribute = d['attribute']
+                crowd['attribute'] = d['attribute']
+                crowd['index_id'] = d['index_id']
+                #　得意な固有表現についての解答
+                if attribute in c_att:
+                    if random.uniform(0,1)> 0.8:
+                        crowd['crowd_dicision'] = not d['correct']
+                    else:
+                        crowd['crowd_dicision'] = d['correct']
+                # 苦手な固有表現についての解答
+                if attribute not in c_att:
+                    if random.uniform(0,1)< 0.8:
+                        crowd['crowd_dicision'] = not d['correct']
+                    else:
+                        crowd['crowd_dicision'] = d['correct']
+                crowd_ans.append(dict(crowd))
+            crowd_df = pd.DataFrame(crowd_ans)
+
+            for i in range(len(df)):
+                system = defaultdict(str)
+                d=df.iloc[i]
+                attribute = d['attribute']
+                system['attribute'] = d['attribute']
+                system['index_id'] = d['index_id']
+                #　得意な固有表現についての解答
+                if attribute in s_att:
+                    if random.uniform(0,1)> 0.8:
+                        system['system_dicision'] = not d['correct']
+                    else:
+                        system['system_dicision'] = d['correct']
+                # 苦手な固有表現についての解答
+                if attribute not in s_att:
+                    if random.uniform(0,1)< 0.8:
+                        system['system_dicision'] = not d['correct']
+                    else:
+                        system['system_dicision'] = d['correct']
+                system_ans.append(dict(system))
+            system_df = pd.DataFrame(system_ans)
+            # import ipdb;ipdb.set_trace()
+            make_df = pd.merge(df, crowd_df, on='index_id')
+            df = pd.merge(make_df, system_df, on='index_id')
+
         df["text"] = df["text_text"].apply(tokenize_text)
-        
         df = (
             df[
-                ["page_id",
+                [
+                    "page_id",
                     "system_dicision",
                     "crowd_dicision",
                     "correct",
