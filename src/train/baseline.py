@@ -25,8 +25,8 @@ def baseline_train(data_path, config):
     batch_size = config.train.batch_size
     df = pd.read_csv(data_path)
     df["text"] = [ast.literal_eval(d) for d in df["text"]]
-    train_df, validate = train_test_split(df, test_size=0.2)
-    validate, test = train_test_split(validate, test_size=0.5)
+    train_df, validate = train_test_split(df, test_size=0.2,tratify=df["attribute_id"])
+    validate, test = train_test_split(validate, test_size=0.5,tratify=validate["attribute_id"])
     print(len(train_df), len(validate), len(test))
     if debug:
         train_df = train_df[: 8 * 2]

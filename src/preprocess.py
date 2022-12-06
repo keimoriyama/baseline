@@ -130,7 +130,7 @@ def main():
             # import ipdb;ipdb.set_trace()
             make_df = pd.merge(df, crowd_df, on='index_id')
             df = pd.merge(make_df, system_df, on='index_id')
-
+            import ipdb;ipdb.set_trace()
         df["text"] = df["text_text"].apply(tokenize_text)
         df = (
             df[
