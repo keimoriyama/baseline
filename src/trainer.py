@@ -303,7 +303,7 @@ class BaselineModelTrainer(pl.LightningModule):
         return optimizer
 
     def loss_function(
-        self, output, system_out, system_dicision, cloud_dicision, annotator
+        self, output, system_out, system_dicision, crowd_dicision, annotator
     ):
         # log2(0)が入るのを防ぐために、微小値を足しておく
         output = torch.stack((system_out, output[:, 1]), -1)
@@ -311,7 +311,8 @@ class BaselineModelTrainer(pl.LightningModule):
         # import ipdb;ipdb.set_trace()
         # m1 = (cloud_dicision == annotator).to(int)
         m1 = (system_dicision != annotator).to(int)
-        loss = -(self.alpha * m1 + (1 - m1)) * torch.log2(out[:, 0]) - m1 * torch.log2(
+        m2 = (system_dicision == crowd_dicision == annotator).to(int)
+        loss = -(self.alpha * m2 + (1 - m1)) * torch.log2(out[:, 0]) - m1 * torch.log2(
             out[:, 1]
         )
         assert not torch.isnan(loss).any()
